@@ -1,0 +1,69 @@
+{
+  "name": "dexxyqisland",
+  "productName": "dexxyqisland",
+  "version": "1.3.0-beta.18",
+  "description": "dexxyqisland — Dynamic Island for Windows with Mascot & SoundCloud",
+  "author": "dexxyq",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win nsis"
+  },
+  "build": {
+    "appId": "com.dexxyq.island",
+    "productName": "dexxyqisland",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "telegram.js",
+      "spotify.js",
+      "spotify-volume.cs",
+      "preload.js",
+      "sc-preload.js",
+      "src/**/*",
+      "build/icon.ico",
+      "build/icon.png",
+      "package.json"
+    ],
+    "asarUnpack": [
+      "node_modules/@prebuilt-tdlib/win32-x64/*.dll",
+      "build/icon.ico",
+      "build/icon.png"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": true,
+      "perMachine": false,
+      "createDesktopShortcut": false,
+      "createStartMenuShortcut": false,
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "runAfterFinish": false,
+      "warningsAsErrors": false,
+      "include": "build/installer.nsh",
+      "artifactName": "dexxyqisland-Setup-${version}.exe"
+    }
+  },
+  "dependencies": {
+    "prebuilt-tdlib": "0.1008070.0",
+    "qrcode": "1.5.4",
+    "tdl": "8.1.0"
+  },
+  "devDependencies": {
+    "electron": "^41.2.0",
+    "electron-builder": "^26.18.0"
+  }
+}

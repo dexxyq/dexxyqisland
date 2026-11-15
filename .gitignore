@@ -1,0 +1,12 @@
+/node_modules/
+/dist/
+/*-release/
+/user-data/
+/shelf-storage/
+/.env
+/.env.*
+*.log
+*.exe
+*.blockmap
+desktop.ini
+Thumbs.db

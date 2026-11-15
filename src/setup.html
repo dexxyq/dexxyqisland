@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Установка dexxyqisland</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: transparent;
+      font-family: 'Segoe UI Variable Display', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: #ffffff;
+      overflow: hidden;
+    }
+
+    .setup-card {
+      width: 680px;
+      height: 480px;
+      background:
+        radial-gradient(circle at 20% 25%, rgba(168, 85, 247, 0.22), transparent 55%),
+        radial-gradient(circle at 85% 80%, rgba(255, 85, 0, 0.14), transparent 50%),
+        #0b0812;
+      border: 1.5px solid rgba(184, 92, 255, 0.38);
+      border-radius: 26px;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), 0 0 32px rgba(168, 85, 247, 0.25) inset;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* DRAGGABLE TOP BAR */
+    .titlebar {
+      height: 46px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 18px;
+      -webkit-app-region: drag;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .titlebar-brand {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: #b85cff;
+      box-shadow: 0 0 10px #b85cff;
+    }
+
+    .titlebar-text {
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.5px;
+      color: #f3e8ff;
+    }
+
+    .version-pill {
+      font-size: 10px;
+      font-weight: 700;
+      background: rgba(184, 92, 255, 0.2);
+      border: 1px solid rgba(184, 92, 255, 0.4);
+      color: #d8b4fe;
+      padding: 2px 8px;
+      border-radius: 99px;
+    }
+
+    .close-btn {
+      -webkit-app-region: no-drag;
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.05);
+      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .close-btn:hover {
+      background: rgba(239, 68, 68, 0.28);
+      color: #fca5a5;
+    }
+
+    /* MAIN CONTENT SPLIT */
+    .body-split {
+      flex: 1;
+      display: flex;
+      padding: 22px 24px;
+      gap: 24px;
+    }
+
+    /* LEFT HERO MASCOT SHOWCASE */
+    .left-showcase {
+      width: 215px;
+      background: radial-gradient(circle at 50% 42%, rgba(168, 85, 247, 0.26), rgba(16, 9, 28, 0.8));
+      border: 1px solid rgba(184, 92, 255, 0.3);
+      border-radius: 20px;
+      padding: 18px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      text-align: center;
+    }
+
+    .mascot-bubble {
+      background: rgba(184, 92, 255, 0.22);
+      border: 1px solid rgba(216, 180, 254, 0.4);
+      color: #f5d0fe;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 5px 12px;
+      border-radius: 12px;
+    }
+
+    .mascot-svg-wrap {
+      width: 138px;
+      height: 120px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 0 18px rgba(184, 92, 255, 0.8));
+      animation: floatMascot 2.8s ease-in-out infinite;
+    }
+
+    @keyframes floatMascot {
+      0%, 100% { transform: translateY(0px) scale(1); }
+      50% { transform: translateY(-7px) scale(1.03); }
+    }
+
+    .mascot-svg-wrap svg {
+      width: 130px;
+      height: 112px;
+    }
+
+    .showcase-footer h2 {
+      font-size: 18px;
+      font-weight: 900;
+      background: linear-gradient(90deg, #ffffff, #d8b4fe);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .showcase-footer p {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.52);
+      margin-top: 4px;
+      line-height: 1.35;
+    }
+
+    /* RIGHT WIZARD STEPS */
+    .right-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .step-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #ffffff;
+      margin-bottom: 4px;
+    }
+
+    .step-sub {
+      font-size: 12px;
+      color: rgba(255, 255, 255, 0.58);
+      margin-bottom: 16px;
+    }
+
+    .field-group {
+      margin-bottom: 14px;
+    }
+
+    .field-label {
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #d8b4fe;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .dir-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .dir-input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(184, 92, 255, 0.3);
+      border-radius: 11px;
+      padding: 9px 12px;
+      color: #fff;
+      font-size: 12px;
+      outline: none;
+    }
+
+    .browse-btn {
+      background: rgba(184, 92, 255, 0.18);
+      border: 1px solid rgba(184, 92, 255, 0.45);
+      color: #f3e8ff;
+      font-size: 12px;
+      font-weight: 700;
+      padding: 0 14px;
+      border-radius: 11px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .browse-btn:hover {
+      background: #a855f7;
+      color: #fff;
+    }
+
+    /* CHECKBOX CARDS */
+    .options-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .opt-card {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 9px 12px;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .opt-card:hover {
+      background: rgba(184, 92, 255, 0.1);
+      border-color: rgba(184, 92, 255, 0.35);
+    }
+
+    .opt-card input[type="checkbox"] {
+      accent-color: #a855f7;
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+    }
+
+    .opt-text-wrap {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .opt-title {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #ffffff;
+    }
+
+    .opt-desc {
+      font-size: 10.5px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    /* PROGRESS SECTION */
+    .progress-box {
+      display: none;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 10px;
+      background: rgba(184, 92, 255, 0.08);
+      border: 1px solid rgba(184, 92, 255, 0.25);
+      padding: 12px;
+      border-radius: 14px;
+    }
+
+    .progress-box.visible {
+      display: flex;
+    }
+
+    .progress-top {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: #e9d5ff;
+    }
+
+    .progress-track {
+      width: 100%;
+      height: 8px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+
+    .progress-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, #a855f7, #ff5500);
+      border-radius: 99px;
+      transition: width 0.3s ease;
+    }
+
+    /* BOTTOM ACTION BUTTONS */
+    .bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, #a855f7, #ff5500);
+      border: none;
+      color: #ffffff;
+      font-size: 13.5px;
+      font-weight: 800;
+      padding: 11px 26px;
+      border-radius: 13px;
+      cursor: pointer;
+      box-shadow: 0 6px 20px rgba(168, 85, 247, 0.45);
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
+    }
+
+    .primary-btn:hover {
+      transform: translateY(-2px) scale(1.02);
+      box-shadow: 0 10px 26px rgba(168, 85, 247, 0.65);
+    }
+
+    .primary-btn:disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="setup-card">
+    <div class="titlebar">
+      <div class="titlebar-brand">
+        <span class="dot"></span>
+        <span class="titlebar-text">УСТАНОВЩИК DEXXYQISLAND</span>
+        <span class="version-pill" id="setupVersion">64-bit</span>
+      </div>
+      <button class="close-btn" id="closeBtn" title="Закрыть">✕</button>
+    </div>
+
+    <div class="body-split">
+      <!-- Left Mascot Card -->
+      <div class="left-showcase">
+        <div class="mascot-bubble" id="mascotBubble">Готов к установке! 👾</div>
+        <div class="mascot-svg-wrap">
+          <svg viewBox="0 0 32 28" shape-rendering="crispEdges">
+            <path fill="#b85cff" d="M6,3 h5 v1 h6 v-1 h6 v1 h4 v2 h-2 v2 h3 v2 h-2 v2 h3 v2 h-3 v2 h-1 v3 h-2 v3 h-1 v-3 h-2 v4 h-1 v-4 h-2 v3 h-1 v-3 h-2 v-3 h-2 v-2 h-3 v-2 h2 v-2 h-2 v-2 h3 v-2 h-2 z" />
+            <path fill="#291042" d="M8,4 h15 v2 h-1 v2 h2 v2 h-2 v2 h2 v2 h-2 v3 h-2 v2 h-2 v-2 h-2 v2 h-2 v-2 h-2 v-3 h-2 v-2 h2 v-2 h-2 v-2 h1 z" />
+            <path fill="#4c1d7a" d="M11,5 h9 v2 h-9 z M9,11 h2 v2 h-2 z M21,11 h2 v2 h-2 z" />
+            <path fill="#d8b4fe" d="M9,6 h4 v2 h2 v3 h-5 v-1 h-1 z M20,6 h4 v4 h-1 v1 h-5 v-3 h2 z" />
+            <path fill="#ffffff" d="M10,7 h3 v2 h2 v2 h-4 v-1 h-1 z M21,7 h3 v3 h-1 v1 h-4 v-2 h2 z" />
+            <path fill="#a855f7" d="M8,12 h2 v1 h2 v1 h2 v-1 h2 v1 h2 v-1 h2 v1 h2 v-1 h2 v3 h-2 v2 h-12 v-2 h-2 z" />
+            <path fill="#f5d0fe" d="M10,14 h2 v1 h2 v-1 h2 v1 h2 v-1 h2 v2 h-10 z" />
+            <path fill="#b85cff" d="M1,15 h5 v1 h1 v5 h-2 v-2 h-1 v2 h-1 v-2 h-1 v3 h-1 z" />
+            <path fill="#291042" d="M2,16 h4 v3 h-4 z" />
+            <path fill="#b85cff" d="M25,13 h6 v7 h-1 v-3 h-1 v3 h-1 v-3 h-1 v3 h-2 z" />
+            <path fill="#291042" d="M26,14 h4 v3 h-4 z" />
+          </svg>
+        </div>
+        <div class="showcase-footer">
+          <h2>dexxyqisland</h2>
+          <p>Dynamic Island для Windows со встроенным SoundCloud, статистикой ПК и буфером обмена</p>
+        </div>
+      </div>
+
+      <!-- Right Configuration & Progress -->
+      <div class="right-panel">
+        <div>
+          <div class="step-title" id="mainHeading">Настройка установки</div>
+          <div class="step-sub" id="mainSub">Выбери папку установки и нужные параметры (или обнови поверх старой версии)</div>
+
+          <div class="field-group" id="dirGroup">
+            <label class="field-label">ПАПКА УСТАНОВКИ</label>
+            <div class="dir-row">
+              <input type="text" class="dir-input" id="installDirInput" />
+              <button class="browse-btn" id="browseBtn">Обзор...</button>
+            </div>
+          </div>
+
+          <div class="options-list" id="optionsList">
+            <label class="opt-card">
+              <input type="checkbox" id="chkShortcut" checked />
+              <div class="opt-text-wrap">
+                <span class="opt-title">Создать ярлык «dexxyqisland» на Рабочем столе</span>
+                <span class="opt-desc">Фирменная иконка в стиле твоего чудика-маскота</span>
+              </div>
+            </label>
+
+            <label class="opt-card">
+              <input type="checkbox" id="chkAutoStart" checked />
+              <div class="opt-text-wrap">
+                <span class="opt-title">Запускать автоматически вместе с Windows</span>
+                <span class="opt-desc">Островок будет сразу готов к работе при включении ПК</span>
+              </div>
+            </label>
+
+            <label class="opt-card">
+              <input type="checkbox" id="chkComponents" checked disabled />
+              <div class="opt-text-wrap">
+                <span class="opt-title">Встроенные компоненты (SoundCloud + FPS Boost)</span>
+                <span class="opt-desc">Все нужные модули уже вшиты — интернет не требуется</span>
+              </div>
+            </label>
+          </div>
+
+          <div class="progress-box" id="progressBox">
+            <div class="progress-top">
+              <span id="progressStatus">Подготовка...</span>
+              <span id="progressPercent">0%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bottom-bar">
+          <button class="primary-btn" id="installBtn">Установить dexxyqisland ⚡</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const installDirInput = document.getElementById('installDirInput');
+    const browseBtn = document.getElementById('browseBtn');
+    const chkShortcut = document.getElementById('chkShortcut');
+    const chkAutoStart = document.getElementById('chkAutoStart');
+    const installBtn = document.getElementById('installBtn');
+    const closeBtn = document.getElementById('closeBtn');
+    const progressBox = document.getElementById('progressBox');
+    const progressStatus = document.getElementById('progressStatus');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressFill = document.getElementById('progressFill');
+    const mascotBubble = document.getElementById('mascotBubble');
+    const mainHeading = document.getElementById('mainHeading');
+    const mainSub = document.getElementById('mainSub');
+
+    let installedExePath = null;
+    let isFinished = false;
+
+    window.dexxyq.setupGetDefaultDir().then((dir) => {
+      if (dir) installDirInput.value = dir;
+    });
+    window.dexxyq.setupGetVersion().then(version => {
+      document.getElementById('setupVersion').textContent = `v${version} • 64-bit`;
+    });
+
+    browseBtn.addEventListener('click', async () => {
+      const picked = await window.dexxyq.setupBrowseDir();
+      if (picked) {
+        installDirInput.value = picked;
+        mascotBubble.textContent = 'Отличное место! 📁';
+      }
+    });
+
+    closeBtn.addEventListener('click', () => {
+      window.dexxyq.setupFinishAndLaunch({ launch: false });
+    });
+
+    window.dexxyq.onSetupProgress(({ percent, status }) => {
+      progressFill.style.width = `${percent}%`;
+      progressPercent.textContent = `${percent}%`;
+      progressStatus.textContent = status;
+    });
+
+    installBtn.addEventListener('click', async () => {
+      if (isFinished) {
+        window.dexxyq.setupFinishAndLaunch({
+          launch: true,
+          exePath: installedExePath
+        });
+        return;
+      }
+
+      installBtn.disabled = true;
+      browseBtn.disabled = true;
+      installDirInput.disabled = true;
+      progressBox.classList.add('visible');
+      mascotBubble.textContent = 'Устанавливаю... ⚡';
+
+      const res = await window.dexxyq.setupPerformInstall({
+        installDir: installDirInput.value.trim(),
+        desktopShortcut: chkShortcut.checked,
+        autoStart: chkAutoStart.checked
+      }).catch(() => ({ error: 'Не удалось завершить установку. Попробуй ещё раз.' }));
+
+      if (res && res.ok) {
+        isFinished = true;
+        installedExePath = res.exePath;
+        mainHeading.textContent = 'Готово! dexxyqisland установлен 💜';
+        mainSub.textContent = `Установлено в: ${res.targetDir}`;
+        mascotBubble.textContent = 'Погнали! Врубай! 🔥';
+        installBtn.disabled = false;
+        installBtn.textContent = 'Запустить dexxyqisland 🚀';
+      } else {
+        mascotBubble.textContent = 'Упс, ошибка!';
+        progressStatus.textContent = (res && res.error) ? res.error : 'Ошибка установки';
+        if (res?.suggestedDir) installDirInput.value = res.suggestedDir;
+        installBtn.disabled = false;
+        browseBtn.disabled = false;
+        installDirInput.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

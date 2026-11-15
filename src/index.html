@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>dexxyq — Dynamic Island</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="stage">
+    <!-- Dynamic Island / Notch Container -->
+    <div id="island" class="island closed">
+      
+      <!-- CLOSED STATE (Compact Pill / Notch) -->
+      <div class="closed-bar" id="closedBar">
+        <div class="closed-left">
+          <div class="mini-mascot-wrap" id="miniMascotWrap" title="Твой чудик dexxyq">
+            <!-- Pixel Ghost Mascot Mini SVG -->
+            <svg viewBox="0 0 32 28" class="pixel-ghost-svg mini" shape-rendering="crispEdges">
+              <defs>
+                <g id="mascot-glasses">
+                  <path fill="#100c17" stroke="#e9d5ff" d="M8 6h8v6H8z M18 6h8v6h-8z M16 8h2"/>
+                  <path fill="#c4b5fd" d="M9 7h4v1H9z M19 7h4v1h-4z"/>
+                </g>
+                <g id="mascot-headphones">
+                  <path fill="none" stroke="#ddd6fe" stroke-width="2" d="M6 12V7Q6 1 16 1T26 7v5"/>
+                  <path fill="#e9d5ff" d="M4 9h5v7H4z M24 9h5v7h-5z"/>
+                </g>
+                <g id="mascot-crown">
+                  <path fill="#fbbf24" d="M9 0h2v2h4V0h2v2h4V0h2v5H9z"/>
+                  <path fill="#fef3c7" d="M9 2h2v2H9z M15 0h2v2h-2z M21 2h2v2h-2z"/>
+                  <path fill="#a16207" d="M9 5h14v1H9z"/>
+                </g>
+                <g id="mascot-cap">
+                  <path fill="#60a5fa" d="M9 2h3V0h9v1h3v2h2v3H9z"/>
+                  <path fill="#dbeafe" d="M13 1h6v1h-6z"/>
+                  <path fill="#1d4ed8" d="M17 5h13v2H17z"/>
+                </g>
+                <g id="mascot-bow">
+                  <path fill="#fb7185" d="M7 0h4v1h3V0h4v5h-4V4h-3v1H7z"/>
+                  <path fill="#fecdd3" d="M11 1h3v3h-3z"/>
+                </g>
+                <g id="mascot-halo">
+                  <path fill="#fef08a" fill-rule="evenodd" d="M10 0h13v1h2v2h-2v1H10V3H8V1h2z M11 1h11v2H11z"/>
+                </g>
+                <g id="mascot-scarf">
+                  <path fill="#34d399" d="M8 19h15v3h-4v4h-4v-4H8z"/>
+                  <path fill="#a7f3d0" d="M8 19h15v1H8z M15 25h4v1h-4z"/>
+                </g>
+              </defs>
+              <!-- Spiky Ghost Body Outline & Fill -->
+              <g class="ghost-body">
+                <path fill="#a855f7" d="M6,3 h5 v1 h6 v-1 h6 v1 h4 v2 h-2 v2 h3 v2 h-2 v2 h3 v2 h-3 v2 h-1 v3 h-2 v3 h-1 v-3 h-2 v4 h-1 v-4 h-2 v3 h-1 v-3 h-2 v-3 h-2 v-2 h-3 v-2 h2 v-2 h-2 v-2 h3 v-2 h-2 z" />
+                <path fill="#2a0e46" d="M8,4 h15 v2 h-1 v2 h2 v2 h-2 v2 h2 v2 h-2 v3 h-2 v2 h-2 v-2 h-2 v2 h-2 v-2 h-2 v-3 h-2 v-2 h2 v-2 h-2 v-2 h1 z" />
+              </g>
+              <!-- Glowing Eyes -->
+              <g class="ghost-eyes">
+                <path fill="#ffffff" d="M10,7 h3 v2 h2 v2 h-4 v-1 h-1 z" />
+                <path fill="#ffffff" d="M21,7 h3 v3 h-1 v1 h-4 v-2 h2 z" />
+              </g>
+              <!-- Jagged Evil Grin -->
+              <g class="ghost-mouth">
+                <path fill="#f0abfc" d="M9,13 h2 v1 h2 v-1 h2 v1 h2 v-1 h2 v1 h2 v-1 h2 v3 h-2 v1 h-10 v-1 h-2 z" />
+              </g>
+              <!-- Floating Claws -->
+              <g class="ghost-hand-l">
+                <path fill="#a855f7" d="M1,15 h5 v1 h1 v4 h-2 v-1 h-1 v2 h-1 v-2 h-1 v3 h-1 z" />
+                <path fill="#3b1261" d="M2,16 h4 v3 h-4 z" />
+              </g>
+              <g class="ghost-hand-r">
+                <path fill="#a855f7" d="M26,14 h5 v6 h-1 v-2 h-1 v2 h-1 v-2 h-1 v2 h-1 z" />
+                <path fill="#3b1261" d="M27,15 h4 v3 h-4 z" />
+              </g>
+            </svg>
+          </div>
+          <span class="closed-track" id="closedTrack">dexxyq</span>
+        </div>
+
+        <div class="closed-center">
+          <div class="camera-dot"></div>
+        </div>
+
+        <div class="closed-right">
+          <span class="telegram-compact-badge" id="telegramCompactBadge" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.6 3.4 2.2 11c-.9.4-.9.9-.1 1.2l5 1.5 2 6.1c.2.6.4.8.8.8l3-2.9 5.2 3.9c.9.5 1.5.2 1.7-.8l3.3-16c.2-1.1-.4-1.7-1.5-1.4zM8 13l11-7-8.7 8.3-.4 4z"/></svg>
+            <span id="telegramCompactCount"></span>
+          </span>
+          <div class="closed-stats-group" id="closedStatsGroup">
+            <div class="closed-stat-pill cyan-pill" id="closedCpuPill">CPU 0%</div>
+            <div class="closed-stat-pill purple-pill extra-stat" id="closedRamPill">RAM 0%</div>
+            <div class="closed-stat-pill orange-pill extra-stat" id="closedGpuPill">GPU 0%</div>
+          </div>
+          <div class="visualizer" id="miniVisualizer">
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+            <span class="bar"></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- EXPANDED STATE -->
+      <div class="expanded-content" id="expandedContent">
+        <div class="top-header">
+          <div class="brand-badge">
+            <span class="status-dot"></span>
+            <span class="brand-title">dexxyq</span>
+          </div>
+
+          <div class="tabs-bar" id="tabsBar">
+            <div class="tab-pill-indicator" id="tabPillIndicator"></div>
+            <button class="tab-btn active" data-tab="home" data-index="0">
+              <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/></svg>
+              <span id="musicTabLabel">SoundCloud</span>
+            </button>
+            <button class="tab-btn" data-tab="stats" data-index="1">
+              <svg viewBox="0 0 24 24"><path fill="currentColor" d="M3.5 18.49l6-6.01 4 4L22 6.92l-1.41-1.41-7.09 7.97-4-4L2 16.99z"/></svg>
+              <span>Система</span>
+            </button>
+            <button class="tab-btn" data-tab="shelf" data-index="2">
+              <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 3H4.99c-1.11 0-1.98.89-1.98 2L3 19c0 1.1.88 2 1.99 2H19c1.1 0 2-.9 2-2V5c0-1.11-.9-2-2-2zm0 12h-4c0 1.66-1.35 3-3 3s-3-1.34-3-3H4.99V5H19v10z"/></svg>
+              <span>Полка</span>
+              <span class="tab-counter" id="shelfCounter">0</span>
+            </button>
+            <button class="tab-btn" data-tab="clipboard" data-index="3">
+              <svg viewBox="0 0 24 24"><path fill="currentColor" d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"/></svg>
+              <span>Буфер</span>
+              <span class="tab-counter" id="clipCounter">0</span>
+            </button>
+            <button class="tab-btn" data-tab="apps" data-index="4">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M3 3h8v8H3zm10 0h8v8h-8zM3 13h8v8H3zm10 0h8v8h-8z"/></svg>
+              <span>Приложения</span>
+            </button>
+            <button class="tab-btn telegram-tab" data-tab="telegram" title="Telegram" aria-label="Telegram">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M21.6 3.4 2.2 11c-.9.4-.9.9-.1 1.2l5 1.5 2 6.1c.2.6.4.8.8.8l3-2.9 5.2 3.9c.9.5 1.5.2 1.7-.8l3.3-16c.2-1.1-.4-1.7-1.5-1.4zM8 13l11-7-8.7 8.3-.4 4z"/></svg>
+              <span class="telegram-tab-count" id="telegramTabCount" hidden></span>
+            </button>
+          </div>
+
+          <div class="header-actions">
+            <button class="icon-btn" id="islandSettingsButton" type="button" title="Настройки" aria-label="Настройки">⚙</button>
+            <button class="icon-btn pinned" id="aotToggleBtn" title="Остров поверх всех окон. Для игр используй полноэкранный режим без рамки.">
+              <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+            </button>
+            <button class="icon-btn" id="monitorSwitchBtn" title="Перекинуть островок на другой монитор (или перетащи за логотип dexxyq)">
+              <svg viewBox="0 0 24 24"><path fill="currentColor" d="M21 2H3c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h7v2H8v2h8v-2h-2v-2h7c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm0 14H3V4h18v12z"/></svg>
+            </button>
+            <button class="icon-btn" id="gameModeBtn" title="Игровой режим / FPS Boost (автоматически экономит ресурсы в играх или включается вручную)">
+              <svg viewBox="0 0 24 24"><path fill="currentColor" d="M21 6H3c-1.1 0-2 .9-2 2v8c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-10 7H8v3H6v-3H3v-2h3V8h2v3h3v2zm4.5 2c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zm4-3c-.83 0-1.5-.67-1.5-1.5S18.67 9 19.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+            </button>
+            <button class="icon-btn" id="autoStartBtn" title="Автозапуск вместе с Windows (Вкл/Выкл)">
+              <svg viewBox="0 0 24 24"><path fill="currentColor" d="M13 3h-2v10h2V3zm4.83 2.17l-1.42 1.42C17.99 7.86 19 9.81 19 12c0 3.87-3.13 7-7 7s-7-3.13-7-7c0-2.19 1.01-4.14 2.58-5.42L6.17 5.17C4.23 6.82 3 9.26 3 12c0 4.97 4.03 9 9 9s9-4.03 9-9c0-2.74-1.23-5.18-3.17-6.83z"/></svg>
+            </button>
+            <button class="icon-btn" id="stealthBtn" title="Скрыть остров в тонкую полоску. Правый клик переключает режим.">
+              <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 13H5v-2h14v2z"/></svg>
+            </button>
+            <button class="icon-btn" id="pinToggleBtn" title="Закрепить открытым">
+              <svg viewBox="0 0 24 24"><path fill="currentColor" d="M16 9V4h1c.55 0 1-.45 1-1s-.45-1-1-1H7c-.55 0-1 .45-1 1s.45 1 1 1h1v5c0 1.66-1.34 3-3 3v2h5.97v7l1 1 1-1v-7H19v-2c-1.66 0-3-1.34-3-3z"/></svg>
+            </button>
+            <button class="icon-btn danger" id="quitBtn" title="Закрыть dexxyq">
+              <svg viewBox="0 0 24 24"><path fill="currentColor" d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+            </button>
+          </div>
+        </div>
+
+        <div class="main-body-area">
+          <!-- INTERACTIVE PIXEL GHOST MASCOT DOCK (Always visible in expanded island!) -->
+          <div class="mascot-stage" id="mascotStage" title="Нажми на чудика! Двойной клик — супер-атака">
+            <div class="mascot-speech" id="mascotSpeech">Хе-хе! Я тут 👾</div>
+            <div class="mascot-character" id="mascotCharacter" data-mood="idle">
+              <svg viewBox="0 0 32 28" class="pixel-ghost-svg full" shape-rendering="crispEdges">
+                <g class="ghost-body">
+                  <!-- Outer Neon Purple Pixel Border -->
+                  <path fill="#b85cff" d="M6,3 h5 v1 h6 v-1 h6 v1 h4 v2 h-2 v2 h3 v2 h-2 v2 h3 v2 h-3 v2 h-1 v3 h-2 v3 h-1 v-3 h-2 v4 h-1 v-4 h-2 v3 h-1 v-3 h-2 v-3 h-2 v-2 h-3 v-2 h2 v-2 h-2 v-2 h3 v-2 h-2 z" />
+                  <!-- Inner Dark Violet Shading -->
+                  <path fill="#291042" d="M8,4 h15 v2 h-1 v2 h2 v2 h-2 v2 h2 v2 h-2 v3 h-2 v2 h-2 v-2 h-2 v2 h-2 v-2 h-2 v-3 h-2 v-2 h2 v-2 h-2 v-2 h1 z" />
+                  <!-- Forehead & Cheek Highlights -->
+                  <path fill="#4c1d7a" d="M11,5 h9 v2 h-9 z M9,11 h2 v2 h-2 z M21,11 h2 v2 h-2 z" />
+                </g>
+                <!-- Glowing White Eyes (Track mouse cursor!) -->
+                <g class="ghost-eyes" id="ghostEyes">
+                  <path fill="#d8b4fe" d="M9,6 h4 v2 h2 v3 h-5 v-1 h-1 z M20,6 h4 v4 h-1 v1 h-5 v-3 h2 z" />
+                  <path fill="#ffffff" d="M10,7 h3 v2 h2 v2 h-4 v-1 h-1 z M21,7 h3 v3 h-1 v1 h-4 v-2 h2 z" />
+                </g>
+                <!-- Mischievous Jagged Pink-Purple Grin -->
+                <g class="ghost-mouth" id="ghostMouth">
+                  <path fill="#a855f7" d="M8,12 h2 v1 h2 v1 h2 v-1 h2 v1 h2 v-1 h2 v1 h2 v-1 h2 v3 h-2 v2 h-12 v-2 h-2 z" />
+                  <path fill="#f5d0fe" d="M10,14 h2 v1 h2 v-1 h2 v1 h2 v-1 h2 v2 h-10 z" />
+                </g>
+                <!-- Left Floating Claw -->
+                <g class="ghost-hand-l">
+                  <path fill="#b85cff" d="M1,15 h5 v1 h1 v5 h-2 v-2 h-1 v2 h-1 v-2 h-1 v3 h-1 z" />
+                  <path fill="#291042" d="M2,16 h4 v3 h-4 z" />
+                </g>
+                <!-- Right Floating Claw -->
+                <g class="ghost-hand-r">
+                  <path fill="#b85cff" d="M25,13 h6 v7 h-1 v-3 h-1 v3 h-1 v-3 h-1 v3 h-2 z" />
+                  <path fill="#291042" d="M26,14 h4 v3 h-4 z" />
+                </g>
+                <g class="ghost-emotion ghost-hearts" fill="#f9a8d4" aria-hidden="true">
+                  <path d="M3 4h2V3h2v1h2v2H8v1H7v1H5V7H4V6H3z M25 1h2v1h1V1h2v2h-1v1h-1v1h-1V4h-1V3h-1z"/>
+                </g>
+                <g class="ghost-emotion ghost-curious" aria-hidden="true">
+                  <path fill="#7dd3fc" d="M26 1h4v1h1v3h-2v1h-2V4h2V3h-3z M27 7h2v2h-2z"/>
+                </g>
+                <g class="ghost-emotion ghost-surprise" aria-hidden="true">
+                  <path fill="#fde68a" d="M27 1h2v4h-2zm0 5h2v2h-2z"/>
+                  <path fill="#f5d0fe" d="M14 13h4v1h1v4h-1v1h-4v-1h-1v-4h1z"/>
+                  <path fill="#291042" d="M15 14h2v4h-2z"/>
+                </g>
+              </svg>
+            </div>
+            <div class="mascot-actions-bar">
+              <button class="m-act-btn" data-act="laugh" title="Зловещий смех">😈</button>
+              <button class="m-act-btn" data-act="dance" title="Качать под бит">🎧</button>
+              <button class="m-act-btn" data-act="rage" title="Разгон энергии">⚡</button>
+              <button class="m-act-btn" data-act="sleep" title="Дремать">💤</button>
+              <button class="m-act-btn" data-act="wave" title="Приветствие" aria-label="Приветствие">👋</button>
+              <button class="m-act-btn" data-act="surprised" title="Удивление" aria-label="Удивление">😮</button>
+              <button class="m-act-btn" data-act="love" title="Сердечки" aria-label="Сердечки">💗</button>
+              <button class="m-act-btn mascot-settings-btn" id="mascotSettingsButton" type="button" title="Настроить маскота" aria-label="Настроить маскота">⚙</button>
+            </div>
+          </div>
+
+          <dialog id="islandSettings" aria-labelledby="islandSettingsTitle">
+            <form id="islandSettingsForm">
+              <div class="mascot-settings-header">
+                <h2 id="islandSettingsTitle">Настройки</h2>
+                <button id="islandSettingsClose" class="btn-small" type="button" aria-label="Закрыть">×</button>
+              </div>
+              <div class="island-settings-body">
+                <fieldset class="settings-language">
+                  <legend>Язык</legend>
+                  <label><input type="radio" name="islandLanguage" value="ru" checked><span lang="ru">Русский</span></label>
+                  <label><input type="radio" name="islandLanguage" value="en"><span lang="en">English</span></label>
+                </fieldset>
+                <fieldset class="island-toolbar-options">
+                  <legend>Кнопки на верхней панели</legend>
+                  <div id="islandToolbarList"></div>
+                </fieldset>
+                <section class="island-shortcut-options">
+                  <h3>Горячие клавиши</h3>
+                  <p>Нажми на поле и введи сочетание. Backspace убирает привязку.</p>
+                  <div id="islandShortcutList"></div>
+                </section>
+              </div>
+              <p id="islandSettingsStatus" role="status"></p>
+              <button class="btn-small mascot-save" type="submit">Сохранить</button>
+            </form>
+          </dialog>
+          <dialog id="mascotSettings" aria-labelledby="mascotSettingsTitle">
+            <form id="mascotSettingsForm">
+              <div class="mascot-settings-header">
+                <h2 id="mascotSettingsTitle">Настроить маскота</h2>
+                <button class="btn-small" id="mascotSettingsCancel" type="button" aria-label="Закрыть">×</button>
+              </div>
+              <div class="mascot-settings-content">
+                <div class="mascot-settings-preview" id="mascotSettingsPreview">
+                  <div id="mascotPreviewArt"></div>
+                  <span id="mascotPreviewPhrase"></span>
+                </div>
+                <div class="mascot-settings-fields">
+                  <fieldset class="mascot-color-field">
+                    <legend>Цвет</legend>
+                    <div class="mascot-color-options">
+                      <button type="button" data-color="#b85cff" style="--swatch:#b85cff" aria-label="Фиолетовый"></button>
+                      <button type="button" data-color="#ec4899" style="--swatch:#ec4899" aria-label="Розовый"></button>
+                      <button type="button" data-color="#38bdf8" style="--swatch:#38bdf8" aria-label="Голубой"></button>
+                      <button type="button" data-color="#2dd4bf" style="--swatch:#2dd4bf" aria-label="Бирюзовый"></button>
+                      <button type="button" data-color="#facc15" style="--swatch:#facc15" aria-label="Жёлтый"></button>
+                      <input id="mascotColor" type="text" value="#b85cff" maxlength="7" pattern="#[0-9a-fA-F]{6}" required aria-label="Свой цвет в формате #RRGGBB" spellcheck="false">
+                    </div>
+                  </fieldset>
+                  <fieldset class="mascot-accessory-field">
+                    <legend>Аксессуар</legend>
+                    <div class="mascot-accessory-options">
+                      <label><input type="radio" name="mascotAccessory" value="none" checked><span>Без</span></label>
+                      <label><input type="radio" name="mascotAccessory" value="glasses"><span>Очки</span></label>
+                      <label><input type="radio" name="mascotAccessory" value="headphones"><span>Наушники</span></label>
+                      <label><input type="radio" name="mascotAccessory" value="crown"><span>Корона</span></label>
+                      <label><input type="radio" name="mascotAccessory" value="cap"><span>Кепка</span></label>
+                      <label><input type="radio" name="mascotAccessory" value="bow"><span>Бант</span></label>
+                      <label><input type="radio" name="mascotAccessory" value="halo"><span>Нимб</span></label>
+                      <label><input type="radio" name="mascotAccessory" value="scarf"><span>Шарф</span></label>
+                    </div>
+                  </fieldset>
+                  <label>Своя фраза <input id="mascotPhrase" type="text" maxlength="80" placeholder="Хе-хе! Я тут 👾"></label>
+                </div>
+              </div>
+              <div class="mascot-settings-footer">
+                <button class="btn-small" id="mascotSettingsReset" type="button">Сбросить</button>
+                <button class="btn-small mascot-save" type="submit">Сохранить</button>
+              </div>
+              <p id="mascotSettingsStatus" role="status"></p>
+            </form>
+          </dialog>
+
+          <!-- TABS CONTENT AREA -->
+          <div class="tabs-viewport">
+            <!-- TAB 1: HOME / MULTI-SERVICE MEDIA PLAYER (SoundCloud / Spotify / Yandex Music) -->
+            <div class="tab-pane active" id="tab-home">
+              <div class="media-layout">
+                <div class="artwork-card" id="artworkCard" data-service="soundcloud" title="Нажми на бейдж, чтобы переключить сервис">
+                  <div class="artwork-placeholder" id="artworkImg">
+                    <svg viewBox="0 0 24 24" class="sc-big-icon" id="serviceBigIcon">
+                      <path fill="currentColor" d="M11.56 8.87V17h8.76c1.85 0 3.35-1.5 3.35-3.35 0-1.69-1.25-3.09-2.88-3.32-.37-2.29-2.36-4.05-4.76-4.05-1.92 0-3.58 1.13-4.35 2.75-.04-.05-.08-.11-.12-.16zM8.9 10.15v6.85h1.32V9.5c-.47.14-.91.37-1.32.65zm-2.63 1.87V17h1.31v-5.38c-.47.1-.91.24-1.31.4zm-2.63 1.48V17h1.31v-3.7c-.46.04-.9.11-1.31.2z"/>
+                    </svg>
+                  </div>
+                  <div class="source-badge" id="sourceBadge">SOUNDCLOUD</div>
+                </div>
+
+                <div class="media-details">
+                  <div class="track-header">
+                    <div class="track-info-col">
+                      <div class="track-title" id="trackTitle">dexxyq SoundCloud</div>
+                      <div class="track-artist" id="trackArtist">Введи трек в поиск ниже и нажми Enter</div>
+                    </div>
+                    <div class="header-right-music">
+                      <div class="service-switcher" id="serviceSwitcher">
+                        <button class="srv-pill active" data-srv="soundcloud" title="SoundCloud">SC</button>
+                        <button class="srv-pill" data-srv="spotify" title="Spotify (Web + ПК)">Spotify</button>
+                        <button class="srv-pill" data-srv="yandex" title="Яндекс Музыка (Web + ПК)">Я.Музыка</button>
+                      </div>
+                      <div class="visualizer large" id="largeVisualizer">
+                        <span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="scrubber-row">
+                    <span class="time-lbl" id="timeCurrent">0:00</span>
+                    <div class="progress-bar-wrap">
+                      <div class="progress-bar-fill" id="progressBarFill" style="width: 0%"></div>
+                    </div>
+                    <span class="time-lbl" id="timeDuration">0:00</span>
+                  </div>
+
+                  <div class="controls-row">
+                    <div class="sc-search-box">
+                      <input type="text" id="scSearchInput" placeholder="Поиск в SC + Enter..." />
+                      <button class="sc-btn-open" id="scOpenWindowBtn" title="Открыть окно SoundCloud">SC</button>
+                    </div>
+
+                    <div class="transport-buttons">
+                      <button class="ctrl-btn" id="btnShuffle" title="Перемешать / Рандом (2x клик — случайный трек)">
+                        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+                      </button>
+                      <button class="ctrl-btn" id="btnPrev" title="Предыдущий">
+                        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+                      </button>
+                      <button class="ctrl-btn play-main" id="btnPlayPause" title="Воспроизвести / Пауза">
+                        <svg viewBox="0 0 24 24" id="playIcon"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>
+                      </button>
+                      <button class="ctrl-btn" id="btnNext" title="Следующий">
+                        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 18l8.5-6L6 6v12zM16 6v12h2V6h-2z"/></svg>
+                      </button>
+                      <button class="ctrl-btn" id="btnLike" title="Лайк в SoundCloud">
+                        <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+                      </button>
+
+                      <!-- Volume Control -->
+                      <div class="volume-wrap" title="Громкость (можно крутить колёсиком мыши)">
+                        <button class="vol-btn" id="btnMute" title="Выкл / Вкл звук">
+                          <svg viewBox="0 0 24 24" id="volIcon"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                        </button>
+                        <input type="range" id="volSlider" class="vol-slider" min="0" max="100" value="80" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 2: SYSTEM STATS -->
+            <div class="tab-pane" id="tab-stats">
+              <div class="stats-grid">
+                <div class="stat-card">
+                  <div class="gauge-wrap">
+                    <svg class="ring-svg" viewBox="0 0 80 80">
+                      <circle class="ring-bg" cx="40" cy="40" r="32" />
+                      <circle class="ring-fg cyan" id="cpuRing" cx="40" cy="40" r="32" stroke-dasharray="201" stroke-dashoffset="201" />
+                    </svg>
+                    <div class="gauge-center">
+                      <span class="gauge-val" id="cpuVal">0%</span>
+                    </div>
+                  </div>
+                  <div class="stat-meta">
+                    <div class="stat-title">CPU</div>
+                    <div class="stat-sub" id="cpuSub">Ядра активны</div>
+                    <canvas id="cpuSparkline" width="95" height="22"></canvas>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="gauge-wrap">
+                    <svg class="ring-svg" viewBox="0 0 80 80">
+                      <circle class="ring-bg" cx="40" cy="40" r="32" />
+                      <circle class="ring-fg purple" id="ramRing" cx="40" cy="40" r="32" stroke-dasharray="201" stroke-dashoffset="201" />
+                    </svg>
+                    <div class="gauge-center">
+                      <span class="gauge-val" id="ramVal">0%</span>
+                    </div>
+                  </div>
+                  <div class="stat-meta">
+                    <div class="stat-title">RAM</div>
+                    <div class="stat-sub" id="ramSub">0 / 0 ГБ</div>
+                    <canvas id="ramSparkline" width="95" height="22"></canvas>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="gauge-wrap">
+                    <svg class="ring-svg" viewBox="0 0 80 80">
+                      <circle class="ring-bg" cx="40" cy="40" r="32" />
+                      <circle class="ring-fg orange" id="gpuRing" cx="40" cy="40" r="32" stroke-dasharray="201" stroke-dashoffset="201" />
+                    </svg>
+                    <div class="gauge-center">
+                      <span class="gauge-val" id="gpuVal">0%</span>
+                    </div>
+                  </div>
+                  <div class="stat-meta">
+                    <div class="stat-title">GPU</div>
+                    <div class="stat-sub" id="gpuSub">GPU</div>
+                    <div class="mini-pills-row">
+                      <span class="mini-pill" id="netDownPill">↓ 0</span>
+                      <span class="mini-pill" id="netUpPill">↑ 0</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="stat-card">
+                  <div class="gauge-wrap">
+                    <svg class="ring-svg" viewBox="0 0 80 80">
+                      <circle class="ring-bg" cx="40" cy="40" r="32" />
+                      <circle class="ring-fg green" id="diskRing" cx="40" cy="40" r="32" stroke-dasharray="201" stroke-dashoffset="201" />
+                    </svg>
+                    <div class="gauge-center">
+                      <span class="gauge-val" id="diskVal">0%</span>
+                    </div>
+                  </div>
+                  <div class="stat-meta">
+                    <div class="stat-title">Диск</div>
+                    <div class="stat-sub" id="diskSub">0 / 0 ГБ</div>
+                    <div class="mini-pills-row">
+                      <span class="mini-pill green-pill" id="batPill">⚡ 100%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- TAB 3: FILE SHELF -->
+            <div class="tab-pane" id="tab-shelf">
+              <div class="shelf-container" id="shelfDropZone">
+                <div class="shelf-toolbar">
+                  <span class="shelf-hint">Брось сюда файлы — чудик придержит их для тебя!</span>
+                  <div class="shelf-actions">
+                    <label class="btn-small" for="shelfFileInput">+ Файл</label>
+                    <input type="file" id="shelfFileInput" multiple style="display:none" />
+                    <button class="btn-small danger" id="shelfClearBtn">Очистить</button>
+                  </div>
+                </div>
+                <div class="shelf-items" id="shelfItemsGrid"></div>
+              </div>
+            </div>
+
+            <!-- TAB 4: CLIPBOARD HISTORY -->
+            <div class="tab-pane" id="tab-clipboard">
+              <div class="clip-container">
+                <div class="clip-toolbar">
+                  <input type="text" id="clipSearchInput" class="clip-search" placeholder="Поиск или вставь текст + Enter..." />
+                  <button class="btn-small" id="clipPasteBtn" title="Захватить текущий буфер сейчас">Вставить</button>
+                  <button class="btn-small danger" id="clipClearBtn">Очистить</button>
+                </div>
+                <div class="clip-list" id="clipList"></div>
+              </div>
+            </div>
+            <div class="tab-pane" id="tab-apps" inert>
+              <div class="shelf-container" id="appsDropZone">
+                <div class="shelf-toolbar">
+                  <span class="shelf-hint" id="appsStatus" role="status"></span>
+                  <button class="btn-small" id="addPinnedApp" type="button">+ Приложение</button>
+                </div>
+                <div class="pinned-apps-list" id="pinnedAppsList" aria-label="Закреплённые приложения"></div>
+              </div>
+            </div>
+            <div class="tab-pane" id="tab-telegram" inert>
+              <div class="telegram-panel">
+                <dialog id="telegramPhotoViewer" aria-label="Просмотр фотографии">
+                  <button type="button" id="telegramClosePhoto" aria-label="Закрыть фото">×</button>
+                  <img id="telegramViewerImage" alt="Фото из переписки" hidden>
+                  <span id="telegramViewerStatus" role="status"></span>
+                </dialog>
+                <form id="telegramAuth" autocomplete="off">
+                  <div id="telegramFields"></div>
+                  <button class="btn-small" id="telegramContinue">Подключить</button>
+                  <button class="btn-small" id="telegramQrButton" type="button" hidden>Войти по QR</button>
+                </form>
+                <div id="telegramQr" class="telegram-qr" hidden>
+                  <img id="telegramQrImage" alt="QR-код для входа в Telegram">
+                  <p>На телефоне открой Telegram → Настройки → Устройства → Подключить устройство. Наведи камеру на QR-код.</p>
+                </div>
+                <div id="telegramChats" class="telegram-chats" hidden>
+                  <div class="telegram-sidebar">
+                    <div class="telegram-sidebar-top">
+                      <strong>Чаты</strong>
+                      <button class="btn-small" id="telegramLogout" type="button" aria-label="Выйти из Telegram">Выйти</button>
+                    </div>
+                    <input id="telegramFilter" type="search" aria-label="Поиск среди недавних чатов" placeholder="Найти чат">
+                    <div id="telegramChatList" class="telegram-chat-list" aria-label="Недавние чаты"></div>
+                  </div>
+                  <div class="telegram-thread">
+                    <div id="telegramChatTitle" class="telegram-thread-title">Telegram</div>
+                    <div id="telegramEmpty" class="telegram-empty">
+                      <strong>Выбери чат</strong>
+                      <span>Здесь появятся сообщения и поле ответа.</span>
+                    </div>
+                    <div id="telegramHistory" class="telegram-history" aria-label="Последние сообщения" hidden></div>
+                    <form id="telegramReply" hidden autocomplete="off">
+                      <div id="telegramAttachment" class="telegram-attachment" hidden>
+                        <img id="telegramAttachmentImage" alt="Предпросмотр скриншота">
+                        <span>Скриншот готов к отправке</span>
+                        <button id="telegramRemoveAttachment" class="btn-small" type="button" aria-label="Убрать скриншот">×</button>
+                      </div>
+                      <div class="telegram-compose">
+                        <input id="telegramText" class="clip-search" maxlength="4096" aria-label="Сообщение" placeholder="Сообщение или скриншот (Ctrl+V)">
+                        <button class="btn-small" type="submit">Отправить</button>
+                      </div>
+                    </form>
+                  </div>
+                </div>
+                <div id="telegramStatus" class="shelf-hint" role="status"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="i18n.js"></script>
+  <script src="renderer.js"></script>
+  <script src="telegram.js"></script>
+  <script src="settings.js"></script>
+</body>
+</html>

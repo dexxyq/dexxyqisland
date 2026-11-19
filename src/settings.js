@@ -5,6 +5,7 @@ const settingsForm = document.getElementById('islandSettingsForm');
 const islandLanguage = settingsForm.elements.namedItem('islandLanguage');
 const toolbarList = document.getElementById('islandToolbarList');
 const shortcutActions = {
+  search: ['Поиск по острову', 'islandToolsButton'],
   home: ['Музыка', 'tab:home'], stats: ['Система', 'tab:stats'], shelf: ['Полка', 'tab:shelf'],
   clipboard: ['Буфер', 'tab:clipboard'], apps: ['Приложения', 'tab:apps'], telegram: ['Telegram', 'tab:telegram'],
   aot: ['Поверх всех окон', 'aotToggleBtn'], monitor: ['Сменить монитор', 'monitorSwitchBtn'],
@@ -12,7 +13,7 @@ const shortcutActions = {
   stealth: ['Скрыть / показать остров', 'stealthBtn'], pin: ['Закрепить открытым', 'pinToggleBtn']
 };
 const toolbarButtons = [
-  ...Object.values(shortcutActions).filter(([, target]) => !target.startsWith('tab:')),
+  ...Object.values(shortcutActions).filter(([, target]) => !target.startsWith('tab:') && target !== 'islandToolsButton'),
   ['Закрыть dexxyq', 'quitBtn']
 ];
 const toolbarSettingsKey = 'dexxyq.hiddenToolbarButtons';
@@ -61,6 +62,12 @@ window.dexxyq.onGlobalAction((action, accelerator) => {
     expandIsland();
     document.querySelector(`[data-tab="${target.slice(4)}"]`).click();
   } else {
+    if (action === 'search') {
+      isGhostPassThrough = false;
+      island.classList.remove('ghost-passthrough');
+      if (isStealth) toggleStealthMode(false);
+      expandIsland();
+    }
     if (action === 'pin' && !isPinned) expandIsland();
     document.getElementById(target).click();
   }
@@ -82,9 +89,9 @@ function shortcutInput(action, label, value) {
       input.value = '';
       return;
     }
-    const key = /^(Key[A-Z]|Digit[0-9])$/.test(event.code) ? event.code.at(-1) : event.key;
+    const key = event.code === 'Space' ? 'Space' : /^(Key[A-Z]|Digit[0-9])$/.test(event.code) ? event.code.at(-1) : event.key;
     const modifiers = [event.ctrlKey && 'Ctrl', event.altKey && 'Alt', event.shiftKey && 'Shift', event.metaKey && 'Super'].filter(Boolean);
-    if (/^F(?:[1-9]|1[0-2])$/.test(key) || (modifiers.length && /^[A-Z0-9]$/.test(key))) {
+    if (/^F(?:[1-9]|1[0-2])$/.test(key) || (modifiers.length && /^(?:[A-Z0-9]|Space)$/.test(key))) {
       input.value = [...modifiers, key].join('+');
     }
   });

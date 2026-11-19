@@ -24,10 +24,77 @@ html, body {
   padding-top: 0;
 }
 
+#islandTools {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(620px, 94vw);
+  max-height: calc(100vh - 16px);
+  padding: 12px;
+  border: 1px solid #70449a;
+  border-radius: 16px;
+  background: var(--theme-surface, #1a1226);
+  color: var(--theme-text, #f8efff);
+  color-scheme: dark;
+  overflow: hidden;
+}
+#islandTools[open] { display: flex; flex-direction: column; gap: 9px; }
+#islandTools::backdrop { background: #0a0714c9; }
+#toolsNavigation { display: flex; gap: 5px; flex-wrap: wrap; }
+#toolsNavigation [aria-pressed="true"], #clipFavorites[aria-pressed="true"] {
+  background: #533077;
+  border-color: #bc8aed;
+}
+.tools-body { overflow-y: auto; min-height: 0; scrollbar-width: thin; }
+.tools-body [hidden] { display: none; }
+.tools-body [data-tool-panel="search"] > input { width: 100%; margin-bottom: 7px; }
+.tools-list { display: grid; gap: 5px; margin-top: 7px; }
+.tools-hint { font-size: 11px; line-height: 1.4; color: #c8b9db; margin: 5px 0; }
+.tools-search-result {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  min-height: 30px;
+}
+.tools-search-result span { white-space: nowrap; text-overflow: ellipsis; overflow: hidden; }
+.tools-search-result small { flex-shrink: 0; color: #c8b9db; font-weight: 400; }
+.tools-row { display: flex; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid #ffffff12; }
+.tools-row-title, .tools-history-details { flex: 1; min-width: 0; overflow-wrap: anywhere; font-size: 12px; }
+.tools-row button { flex-shrink: 0; }
+.tools-timer-time { font: 12px 'Segoe UI', sans-serif; font-variant-numeric: tabular-nums; }
+.tools-device { flex: 1; min-width: 0; white-space: normal; text-align: left; overflow-wrap: anywhere; }
+.tools-device-heading { font-size: 12px; font-weight: 700; margin-top: 4px; }
+.tools-timer-form { display: grid; grid-template-columns: 1fr 110px auto; gap: 8px; align-items: end; }
+.tools-timer-form label { display: grid; gap: 3px; font-size: 11px; }
+.tools-timer-form input { width: 100%; }
+#islandToolsStatus { font-size: 11px; color: #f2c7ff; }
+#islandToolsStatus:empty { display: none; }
+#islandToolsButton { position: relative; }
+.island[data-tools-notice] #islandToolsButton::after,
+.island[data-tools-notice] .closed-left::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #f5c16b;
+  flex-shrink: 0;
+}
+.island[data-tools-notice] #islandToolsButton::after { position: absolute; right: 1px; top: 1px; }
+.clip-favorite[aria-pressed="true"] { color: #f5c16b; }
+.pinned-link-form { display: flex; gap: 5px; margin-bottom: 6px; }
+.pinned-link-form[hidden] { display: none; }
+.pinned-link-form input { flex: 1; min-width: 0; }
+.header-actions { gap: 1px; }
+
 /* =====================================================
    DYNAMIC ISLAND — BUTTER-SMOOTH SPRING ANIMATIONS
    ===================================================== */
 .island {
+  --closed-width: 320px;
+  --expanded-width: 736px;
+  --expanded-height: 248px;
   position: relative;
   background: radial-gradient(circle at 18% 65%, rgba(168, 85, 247, 0.14), transparent 55%), #0a0a0e;
   border: 1px solid rgba(184, 92, 255, 0.24);
@@ -40,25 +107,24 @@ html, body {
   overflow: hidden;
   /* Custom Apple-style spring physics curve */
   transition:
-    width 0.48s cubic-bezier(0.16, 1, 0.3, 1),
-    height 0.48s cubic-bezier(0.16, 1, 0.3, 1),
-    border-radius 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    width 0.26s cubic-bezier(0.16, 1, 0.3, 1),
+    height 0.26s cubic-bezier(0.16, 1, 0.3, 1),
+    border-radius 0.26s cubic-bezier(0.16, 1, 0.3, 1),
     border-color 0.35s ease,
-    box-shadow 0.45s ease,
     transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
   transform: translateZ(0);
 }
 
 .island.closed {
-  width: 300px;
+  width: var(--closed-width);
   height: 38px;
   border-bottom-left-radius: 20px;
   border-bottom-right-radius: 20px;
   cursor: pointer;
 }
 
-.island.closed.stats-mode {
-  width: 396px;
+.island.stats-mode {
+  --closed-width: 504px;
 }
 
 /* STEALTH STRIP MODE: 6px glowing bar at the very top edge so browser tabs underneath are 100% accessible! */
@@ -112,8 +178,8 @@ html, body {
 }
 
 .island.expanded {
-  width: 736px;
-  height: 248px;
+  width: var(--expanded-width);
+  height: var(--expanded-height);
   border-bottom-left-radius: 30px;
   border-bottom-right-radius: 30px;
   border-color: rgba(184, 92, 255, 0.36);
@@ -128,15 +194,16 @@ html, body {
 .closed-bar {
   position: absolute;
   top: 0;
-  left: 0;
-  width: 100%;
+  left: 50%;
+  width: calc(var(--closed-width) - 2px);
   height: 38px;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
+  column-gap: 7px;
   padding: 0 14px;
   opacity: 1;
-  transform: scale(1) translateY(0);
+  transform: translateX(-50%);
   transition:
     opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
     transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
@@ -144,7 +211,7 @@ html, body {
 
 .island.expanded .closed-bar {
   opacity: 0;
-  transform: scale(0.92) translateY(-8px);
+  transform: translate(-50%, -8px) scale(.96);
   pointer-events: none;
 }
 
@@ -153,6 +220,7 @@ html, body {
   align-items: center;
   gap: 8px;
   max-width: 145px;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -189,23 +257,22 @@ html, body {
   text-overflow: ellipsis;
 }
 
-.closed-center {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.camera-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #3b1d5e, #0c0914);
-  border: 1px solid rgba(184, 92, 255, 0.25);
+.closed-clock {
+  justify-self: center;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .035em;
+  white-space: nowrap;
+  color: #f1d9ff;
+  text-shadow: 0 0 10px #be71f88c, 0 2px 3px #11091b;
 }
 
 .closed-right {
   display: flex;
   align-items: center;
+  justify-self: end;
   gap: 8px;
 }
 
@@ -253,6 +320,10 @@ html, body {
   display: inline-flex;
 }
 
+.island.stats-mode .closed-stat-pill {
+  padding-inline: 6px;
+}
+
 .island.stats-mode .closed-bar .visualizer {
   display: none;
 }
@@ -289,22 +360,29 @@ html, body {
    EXPANDED CONTENT & HEADER
    ===================================================== */
 .expanded-content {
+  position: absolute;
+  inset: 0 auto auto 50%;
+  width: calc(var(--expanded-width) - 2px);
   opacity: 0;
-  transform: translateY(-10px) scale(0.96);
+  transform: translate(-50%, -8px);
   pointer-events: none;
   padding: 12px 18px 14px 18px;
   display: flex;
   flex-direction: column;
-  height: 100%;
+  height: calc(var(--expanded-height) - 1px);
   transition:
-    opacity 0.32s cubic-bezier(0.16, 1, 0.3, 1) 0.04s,
-    transform 0.38s cubic-bezier(0.16, 1, 0.3, 1) 0.04s;
+    opacity 0.18s ease-out 0.03s,
+    transform 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .island.expanded .expanded-content {
   opacity: 1;
-  transform: translateY(0) scale(1);
+  transform: translateX(-50%);
   pointer-events: auto;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .island, .closed-bar, .expanded-content { transition: none; }
 }
 
 /* Offscreen animations resume when their part of the island is visible. */
@@ -1488,9 +1566,9 @@ html, body {
   font-size: 9px;
   font-weight: 800;
 }
-.island.closed:has(.telegram-compact-badge:not([hidden])) { width: 338px; }
-.island.closed.stats-mode:has(.telegram-compact-badge:not([hidden])) { width: 434px; }
-.island.expanded.telegram-expanded { height: 406px; }
+.island:has(.telegram-compact-badge:not([hidden])) { --closed-width: 400px; }
+.island.stats-mode:has(.telegram-compact-badge:not([hidden])) { --closed-width: 598px; }
+.island.telegram-expanded { --expanded-height: 406px; }
 .telegram-expanded .mascot-stage {
   width: 116px;
   padding: 10px 7px;
@@ -1552,6 +1630,37 @@ html, body {
   border-right: 1px solid rgba(184, 92, 255, .19);
 }
 .telegram-sidebar-top { display: flex; align-items: center; justify-content: space-between; padding: 3px 2px; font-size: 13px; }
+.telegram-folders {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #725098 transparent;
+  padding: 2px 1px 3px;
+}
+.telegram-folders button {
+  flex: 0 0 auto;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 4px 8px;
+  border: 1px solid #634180;
+  border-radius: 7px;
+  background: #251934;
+  color: #e9dbfa;
+  font: inherit;
+  font-size: 11px;
+  cursor: pointer;
+}
+.telegram-folders button[aria-pressed="true"] {
+  border-color: #b382e5;
+  background: #4c2b70;
+  color: white;
+}
+.telegram-folders button:focus-visible { outline: 1px solid #e0b9ff; outline-offset: -2px; }
+.telegram-chat-list .telegram-more { flex-shrink: 0; min-height: 29px; }
 #telegramFilter {
   width: 100%;
   min-height: 30px;
@@ -1587,6 +1696,15 @@ html, body {
   color: #f4e5ff;
   background: linear-gradient(145deg, #6b3b9c, #332055);
   font-size: 13px;
+  position: relative;
+  overflow: hidden;
+}
+.telegram-avatar img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 .telegram-chat-details { flex: 1; min-width: 0; display: grid; gap: 3px; }
 .telegram-chat-count {
@@ -1640,6 +1758,40 @@ html, body {
 }
 .telegram-message.outgoing { margin-left: auto; border-radius: 10px 10px 3px 10px; background: #46275e; }
 .telegram-message small { color: #c4b5fd; margin-left: 6px; white-space: nowrap; }
+.telegram-message-reply {
+  margin-left: 7px;
+  padding: 1px 4px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: #e2c6ff;
+  cursor: pointer;
+  user-select: none;
+}
+.telegram-message-reply:hover, .telegram-message-reply:focus-visible { background: #71499b; }
+.telegram-message-highlight { animation: telegram-reply-highlight 1.5s ease-out; }
+@keyframes telegram-reply-highlight {
+  from { box-shadow: inset 0 0 0 2px #c99aff; }
+  to { box-shadow: inset 0 0 0 2px transparent; }
+}
+.telegram-quote {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  margin: 0 0 4px;
+  padding: 4px 7px;
+  border: 0;
+  border-left: 2px solid #b785fa;
+  border-radius: 4px;
+  background: #17102166;
+  color: #f2e7ff;
+  font: inherit;
+  font-size: 11px;
+  text-align: left;
+}
+button.telegram-quote { width: 100%; cursor: pointer; }
+button.telegram-quote:hover { background: #171021aa; }
+.telegram-quote strong, .telegram-quote span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .telegram-message-photo {
   display: block;
   width: 220px;
@@ -1700,8 +1852,61 @@ html, body {
 #telegramViewerStatus:empty { display: none; }
 #telegramStatus { min-height: 12px; }
 #telegramStatus:empty { display: none; }
-#telegramReply { padding: 4px 2px 0; flex-direction: column; }
+#telegramReply { min-height: 0; padding: 4px 2px 0; flex-direction: column; }
+#telegramReply > :not(.telegram-picker) { flex-shrink: 0; }
+.telegram-reply-target { display: flex; align-items: center; gap: 6px; }
+.telegram-reply-target .telegram-quote { flex: 1; margin: 0; }
 .telegram-compose { display: flex; gap: 6px; }
+.telegram-compose .clip-search { min-width: 0; }
+.telegram-compose-tool { flex: 0 0 30px; padding: 0; font-size: 14px; }
+.telegram-compose-tool[aria-pressed="true"] { background: #623a87; border-color: #aa74e0; }
+.telegram-panel.drag-over { outline: 2px dashed #c195f4; outline-offset: -3px; }
+.telegram-documents { display: flex; flex-wrap: wrap; gap: 4px; max-height: 64px; overflow: auto; }
+.telegram-document-chip {
+  display: flex; align-items: center; gap: 5px; max-width: 100%; padding: 2px 5px;
+  border-radius: 6px; background: #35214c; color: #f2e7ff; font-size: 11px;
+}
+.telegram-document-chip span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.telegram-document-chip button { flex: 0 0 auto; }
+.telegram-document-name { display: block; margin-bottom: 3px; font-weight: 700; }
+.telegram-picker {
+  display: flex; flex-direction: column; gap: 5px; padding: 6px; border-radius: 8px;
+  border: 1px solid #513867; background: #241832;
+  min-width: 0; min-height: 0;
+}
+.telegram-pack-toggle, .telegram-pack-list button {
+  display: flex; align-items: center; gap: 8px; min-width: 0; min-height: 27px;
+  padding: 3px 7px; border-radius: 5px; color: #f6eeff; background: #35214c;
+  border: 1px solid transparent; text-align: left; font: inherit; font-size: 11px; cursor: pointer;
+}
+.telegram-pack-toggle { flex-shrink: 0; justify-content: space-between; border-color: #634582; }
+.telegram-pack-toggle span:first-child, .telegram-pack-list button span {
+  min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.telegram-pack-toggle[aria-expanded="true"] span:last-child { transform: rotate(180deg); }
+.telegram-pack-list {
+  display: grid; gap: 3px; min-height: 0; max-height: 104px; overflow: auto; overscroll-behavior: contain;
+  scrollbar-width: thin; scrollbar-color: #8054a0 transparent;
+}
+.telegram-pack-list button[aria-pressed="true"], .telegram-pack-list button:hover { background: #603887; }
+.telegram-pack-toggle:focus-visible, .telegram-pack-list button:focus-visible {
+  outline: 1px solid #cb9bfa; outline-offset: -2px;
+}
+#telegramPickerStatus { margin: 0; font-size: 11px; color: #e9d5ff; }
+.telegram-picker-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(32px, 1fr)); gap: 4px;
+  min-height: 0; max-height: 104px; overflow: auto;
+}
+.telegram-picker-grid.stickers { grid-template-columns: repeat(auto-fill, minmax(48px, 1fr)); }
+.telegram-picker-grid button {
+  display: grid; place-items: center; min-width: 0; height: 30px;
+  border: 0; border-radius: 5px; background: #fff1; color: #fff; cursor: pointer; font-size: 17px;
+}
+.telegram-picker-grid.stickers button { height: 46px; }
+.telegram-picker-grid button:hover { background: #7742a5; }
+.telegram-sticker-art { position: relative; display: grid; place-items: center; width: 40px; height: 40px; }
+.telegram-sticker-art img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.telegram-message .telegram-sticker-art { width: 76px; height: 76px; font-size: 32px; }
 .telegram-attachment {
   display: flex;
   align-items: center;

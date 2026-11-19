@@ -1,6 +1,11 @@
 const { contextBridge, ipcRenderer, webUtils } = require('electron');
 
 contextBridge.exposeInMainWorld('dexxyq', {
+  tools: (action, value) => ipcRenderer.invoke('island-tools', action, value),
+  audio: (action, value) => ipcRenderer.invoke('audio-control', action, value),
+  pinClipboard: id => ipcRenderer.invoke('clipboard-pin', id),
+  onToolsUpdate: callback => ipcRenderer.on('island-tools-update', (_, update) => callback(update)),
+  onToolsOpen: callback => ipcRenderer.on('island-tools-open', (_, section) => callback(section)),
   getShortcuts: () => ipcRenderer.invoke('shortcuts-get'),
   saveShortcuts: values => ipcRenderer.invoke('shortcuts-save', values),
   onGlobalAction: callback => {
@@ -54,6 +59,7 @@ contextBridge.exposeInMainWorld('dexxyq', {
   getShelf: () => ipcRenderer.invoke('shelf-get'),
   pinnedApps: (action, value) => ipcRenderer.invoke('pinned-apps', action, value),
   addShelfFiles: (files) => ipcRenderer.invoke('shelf-add-files', files),
+  addClipboardToShelf: (id) => ipcRenderer.invoke('shelf-add-clipboard', id),
   removeShelfItem: (id) => ipcRenderer.invoke('shelf-remove', id),
   clearShelf: () => ipcRenderer.invoke('shelf-clear'),
   openShelfFile: (filePath) => ipcRenderer.invoke('shelf-open-file', filePath),

@@ -1,7 +1,7 @@
 {
   "name": "dexxyqisland",
   "productName": "dexxyqisland",
-  "version": "1.3.0-beta.18",
+  "version": "1.3.2-beta",
   "description": "dexxyqisland — Dynamic Island for Windows with Mascot & SoundCloud",
   "author": "dexxyq",
   "main": "main.js",
@@ -18,6 +18,9 @@
     },
     "files": [
       "main.js",
+      "island-tools.js",
+      "audio-control.js",
+      "audio-control.cs",
       "telegram.js",
       "spotify.js",
       "spotify-volume.cs",

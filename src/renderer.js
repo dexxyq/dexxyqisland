@@ -8,6 +8,22 @@ const pinToggleBtn = document.getElementById('pinToggleBtn');
 const quitBtn = document.getElementById('quitBtn');
 const brandBadge = document.querySelector('.brand-badge');
 const closedBar = document.getElementById('closedBar');
+const closedClock = document.getElementById('closedClock');
+let clockTimeout;
+
+function updateClosedClock() {
+  const now = new Date();
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const time = `${hours}:${minutes}`;
+  closedClock.textContent = time;
+  closedClock.dateTime = time;
+  clearTimeout(clockTimeout);
+  clockTimeout = setTimeout(updateClosedClock, 60_000 - now.getTime() % 60_000);
+}
+
+updateClosedClock();
+window.addEventListener('focus', updateClosedClock);
 
 if (aotToggleBtn) {
   window.dexxyq.getAlwaysOnTop().then((res) => {
@@ -83,6 +99,23 @@ if (autoStartBtn) {
 
 const cpuHistory = new Array(22).fill(0);
 const ramHistory = new Array(22).fill(0);
+let openingTimer;
+let telegramWindowTall = false;
+
+function cancelIslandOpening() {
+  clearTimeout(openingTimer);
+  openingTimer = undefined;
+  island.classList.remove('opening');
+}
+
+function finishIslandOpening() {
+  cancelIslandOpening();
+  if (!isExpanded) return;
+  syncStatsView();
+  if (activeTab === 'clipboard') refreshClipboardNow();
+  if (activeTab === 'home') refreshMediaState();
+  if (activeTab === 'telegram') window.dispatchEvent(new Event('telegram-open'));
+}
 
 // =====================================================
 // 1. ZERO-JANK HOVER, STEALTH & GHOST PASS-THROUGH ENGINE
@@ -97,13 +130,12 @@ function expandIsland() {
     isExpanded = true;
     window.dexxyq.setIgnoreMouse(false);
     island.classList.remove('closed', 'stealth');
-    island.classList.add('expanded');
+    island.classList.add('expanded', 'opening');
     syncTelegramLayout();
     requestAnimationFrame(updateTabPill);
-    syncStatsView();
-    if (activeTab === 'clipboard') refreshClipboardNow();
-    if (activeTab === 'home') refreshMediaState();
-    if (activeTab === 'telegram') window.dispatchEvent(new Event('telegram-open'));
+    if (activeTab !== 'stats') syncStatsView();
+    openingTimer = setTimeout(finishIslandOpening,
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 0 : 290);
   }
 }
 
@@ -111,7 +143,8 @@ function scheduleCollapse() {
   if (isPinned || island.querySelector('dialog[open]')) return;
   if (collapseTimer) clearTimeout(collapseTimer);
   collapseTimer = setTimeout(() => {
-    if (island.querySelector('dialog[open]')) return;
+    if (isPinned || island.querySelector('dialog[open]')) return;
+    cancelIslandOpening();
     isExpanded = false;
     island.classList.remove('expanded');
     island.classList.add(isStealth ? 'stealth' : 'closed');
@@ -121,12 +154,14 @@ function scheduleCollapse() {
 }
 
 function toggleStealthMode(forceState) {
+  document.getElementById('islandTools').close();
   document.getElementById('mascotSettings').close();
   document.getElementById('islandSettings').close();
   isStealth = typeof forceState === 'boolean' ? forceState : !isStealth;
   isPinned = false;
   pinToggleBtn.classList.remove('pinned');
   isExpanded = false;
+  cancelIslandOpening();
   island.classList.remove('expanded', 'closed', 'stealth');
   island.classList.add(isStealth ? 'stealth' : 'closed');
   syncTelegramLayout();
@@ -134,17 +169,19 @@ function toggleStealthMode(forceState) {
 }
 
 function syncTelegramLayout() {
-  const expanded = isExpanded && activeTab === 'telegram';
+  const telegramSelected = activeTab === 'telegram';
+  const expanded = isExpanded && telegramSelected;
   const viewer = document.getElementById('telegramPhotoViewer');
   if (!expanded && viewer?.open) viewer.close();
-  if (island.classList.contains('telegram-expanded') === expanded) return;
   island.classList.toggle('telegram-expanded', expanded);
-  window.dexxyq.setTelegramLayout(expanded);
+  if (telegramWindowTall === telegramSelected) return;
+  telegramWindowTall = telegramSelected;
+  window.dexxyq.setTelegramLayout(telegramSelected);
 }
 
 // Right-click anywhere on the island -> immediately collapse into thin 6px Stealth Strip so browser tabs are free!
 island.addEventListener('contextmenu', (e) => {
-  if (e.target.closest('#mascotSettings')) return;
+  if (e.target.closest('dialog')) return;
   e.preventDefault();
   toggleStealthMode(!isStealth);
 });
@@ -170,13 +207,25 @@ island.addEventListener('mouseleave', scheduleCollapse);
 // Hold CTRL (or ALT) while moving mouse -> Ghost Pass-Through mode!
 // Island turns 85% transparent and lets your clicks go straight through to browser tabs underneath!
 let currentInside = false;
-window.addEventListener('mousemove', (e) => {
-  if (document.getElementById('mascotSettings').open || document.getElementById('islandSettings').open) return;
+let pointerFrame;
+let lastPointer;
+window.addEventListener('mousemove', event => {
+  lastPointer = event;
+  if (pointerFrame !== undefined) return;
+  pointerFrame = requestAnimationFrame(() => {
+    pointerFrame = undefined;
+    updateIslandPointer(lastPointer);
+  });
+});
+
+function updateIslandPointer(e) {
+  if (island.querySelector('dialog[open]')) return;
   if (e.ctrlKey || e.altKey) {
     if (!isGhostPassThrough) {
       isGhostPassThrough = true;
       island.classList.add('ghost-passthrough');
       isExpanded = false;
+      cancelIslandOpening();
       island.classList.remove('expanded');
       island.classList.add(isStealth ? 'stealth' : 'closed');
       syncTelegramLayout();
@@ -203,7 +252,7 @@ window.addEventListener('mousemove', (e) => {
     window.dexxyq.setIgnoreMouse(!inside);
   }
 
-  if (isExpanded && mascotCharacter.getAttribute('data-mood') !== 'sleep') {
+  if (isExpanded && !island.classList.contains('opening') && mascotCharacter.getAttribute('data-mood') !== 'sleep') {
     const mRect = mascotStage.getBoundingClientRect();
     const cx = mRect.left + mRect.width / 2;
     const cy = mRect.top + mRect.height / 2;
@@ -212,7 +261,7 @@ window.addEventListener('mousemove', (e) => {
     ghostEyes.style.transform = `translate(${dx}px, ${dy}px)`;
     ghostMouth.style.transform = `translate(${dx * 0.5}px, ${dy * 0.5}px)`;
   }
-});
+}
 
 // Drag the island left/right along the top of the screen by holding left-click on the closed bar or "dexxyq" logo!
 let isDraggingIsland = false;
@@ -474,20 +523,21 @@ tabButtons.forEach((btn) => {
     document.getElementById('tab-apps').inert = target !== 'apps';
     document.getElementById('tab-telegram').inert = target !== 'telegram';
     syncTelegramLayout();
+    const opening = island.classList.contains('opening');
     if (target === 'telegram') {
       setMascotMood('curious', 'Ооо, сейчас посмотрим, с кем ты переписываешься! 👀', 3200);
-      window.dispatchEvent(new Event('telegram-open'));
+      if (!opening) window.dispatchEvent(new Event('telegram-open'));
     }
     updateTabPill();
 
     // Toggle compact closed-bar mode: when "stats" (Система) is selected, show CPU + RAM + GPU in the closed bar!
     island.classList.toggle('stats-mode', target === 'stats');
-    syncStatsView();
+    if (!opening || target !== 'stats') syncStatsView();
 
     // Mascot reacts to tab switches!
     if (target === 'home') {
       setMascotSpeech('Врубай музло! 🎧');
-      refreshMediaState();
+      if (!opening) refreshMediaState();
     }
     if (target === 'stats') {
       setMascotSpeech('Чекаю датчики ПК 📊');
@@ -500,7 +550,7 @@ tabButtons.forEach((btn) => {
     }
     if (target === 'clipboard') {
       setMascotSpeech('Помню всё, что скопировал 📋');
-      refreshClipboardNow();
+      if (!opening) refreshClipboardNow();
     }
   });
 });
@@ -847,6 +897,7 @@ refreshMediaState();
 
 let mediaTick = 0;
 setInterval(() => {
+  if (island.classList.contains('opening')) return;
   if (isStealth && !isExpanded) return;
   if (isGameModeActive && !isExpanded) return;
   if (isExpanded && activeTab !== 'home') return;
@@ -906,7 +957,7 @@ async function refreshSystemStats() {
   if (ramPill) ramPill.textContent = `RAM ${stats.memory.usage}%`;
   if (gpuPill) gpuPill.textContent = `GPU ${stats.gpu.usage}%`;
 
-  if (!isExpanded || activeTab !== 'stats') return;
+  if (!isExpanded || activeTab !== 'stats' || island.classList.contains('opening')) return;
 
   document.getElementById('cpuVal').textContent = `${stats.cpu.usage}%`;
   const cpuSubEl = document.getElementById('cpuSub');
@@ -1044,13 +1095,27 @@ function renderShelfItems(items) {
       <div class="shelf-card-top">
         <span class="shelf-ext">${extLabel}</span>
         <div style="display:flex; gap:4px; align-items:center;">
+          <button class="shelf-del shelf-telegram" type="button" draggable="true" title="${tr('Перетащи в Telegram или нажми, чтобы прикрепить')}" aria-label="${tr('Прикрепить в Telegram')}">↗</button>
           <button class="shelf-del shelf-copy" title="${tr('Скопировать файл в буфер (для Ctrl+V)')}" style="font-size:11px;">📋</button>
           <button class="shelf-del shelf-rm" title="${tr('Убрать с полки')}">✕</button>
         </div>
       </div>
-      <div class="shelf-name">${item.name}</div>
+      <div class="shelf-name"></div>
       <div class="shelf-size">${formatBytes(item.size)} • ${item.addedAt || ''}</div>
     `;
+    card.querySelector('.shelf-name').textContent = item.name;
+    const telegramButton = card.querySelector('.shelf-telegram');
+    telegramButton.addEventListener('click', event => {
+      event.stopPropagation();
+      document.querySelector('[data-tab="telegram"]').click();
+      window.dispatchEvent(new CustomEvent('telegram-files', { detail: [{ shelfId: item.id, name: item.name }] }));
+    });
+    telegramButton.addEventListener('dragstart', event => {
+      event.stopPropagation();
+      clearTimeout(collapseTimer);
+      event.dataTransfer.effectAllowed = 'copy';
+      event.dataTransfer.setData('application/x-dexxyq-shelf', item.id);
+    });
 
     card.querySelector('.shelf-rm').addEventListener('click', async (e) => {
       e.stopPropagation();
@@ -1100,25 +1165,66 @@ window.addEventListener('dragover', (e) => {
     expandIsland();
     document.querySelector('[data-tab="shelf"]').click();
   }
+  const types = e.dataTransfer?.types || [];
+  const overTelegram = e.target.closest?.('[data-tab="telegram"]') || activeTab === 'telegram';
+  const overShelfTab = e.target.closest?.('[data-tab="shelf"]');
+  if ((overTelegram && (types.includes('Files') || types.includes('application/x-dexxyq-shelf'))) ||
+      ((overShelfTab || activeTab === 'shelf') && types.includes('application/x-dexxyq-clipboard'))) {
+    e.dataTransfer.dropEffect = 'copy';
+  }
   const overApps = activeTab === 'apps' && appsDropZone.contains(e.target);
   appsDropZone.classList.toggle('drag-over', overApps);
-  shelfDropZone.classList.toggle('drag-over', !overApps);
+  shelfDropZone.classList.toggle('drag-over', !overApps && !overTelegram);
+  telegramDropZone.classList.toggle('drag-over', !!overTelegram &&
+    (types.includes('Files') || types.includes('application/x-dexxyq-shelf')));
 });
 
 window.addEventListener('dragleave', () => {
   shelfDropZone.classList.remove('drag-over');
   appsDropZone.classList.remove('drag-over');
+  telegramDropZone.classList.remove('drag-over');
 });
 
 window.addEventListener('drop', async (e) => {
   e.preventDefault();
   shelfDropZone.classList.remove('drag-over');
   appsDropZone.classList.remove('drag-over');
+  telegramDropZone.classList.remove('drag-over');
   if (isDraggingFromShelf) {
     isDraggingFromShelf = false;
     return;
   }
-  if (!e.dataTransfer || !e.dataTransfer.files.length) return;
+  if (!e.dataTransfer) return;
+  const telegramTab = e.target.closest?.('[data-tab="telegram"]');
+  const shelfTab = e.target.closest?.('[data-tab="shelf"]');
+  const clipId = e.dataTransfer.getData('application/x-dexxyq-clipboard');
+  if (clipId) {
+    if (activeTab === 'shelf' || shelfTab) {
+      shelfTab?.click();
+      const result = await window.dexxyq.addClipboardToShelf(clipId);
+      if (result) {
+        renderShelfItems(result.items);
+        if (result.added) setMascotMood('laugh', 'Файл на полке! 📁', 2800);
+      }
+    }
+    return;
+  }
+  const shelfId = e.dataTransfer.getData('application/x-dexxyq-shelf');
+  if (telegramTab || activeTab === 'telegram') {
+    const files = Array.from(e.dataTransfer.files, file => ({
+      name: file.name, path: window.dexxyq.getFilePath(file)
+    }));
+    if (shelfId) {
+      const item = (await window.dexxyq.getShelf()).find(entry => entry.id === shelfId);
+      if (item) files.push({ shelfId, name: item.name });
+    }
+    if (files.length) {
+      telegramTab?.click();
+      window.dispatchEvent(new CustomEvent('telegram-files', { detail: files }));
+    }
+    return;
+  }
+  if (!e.dataTransfer.files.length) return;
   if (activeTab === 'apps' && appsDropZone.contains(e.target)) {
     await updatePinnedApps('drop', Array.from(e.dataTransfer.files, file => window.dexxyq.getFilePath(file)));
     return;
@@ -1150,6 +1256,7 @@ shelfClearBtn.addEventListener('click', async () => {
 window.dexxyq.getShelf().then(renderShelfItems);
 
 const appsDropZone = document.getElementById('appsDropZone');
+const telegramDropZone = document.querySelector('.telegram-panel');
 const appsList = document.getElementById('pinnedAppsList');
 const appsStatus = document.getElementById('appsStatus');
 const addAppButton = document.getElementById('addPinnedApp');
@@ -1202,7 +1309,7 @@ async function updatePinnedApps(action, value) {
       pinnedAppsLoaded = true;
       renderPinnedApps(result.apps);
     }
-    appsStatus.textContent = result.error ? tr(result.error) : tr('Перетащи сюда .exe или ярлык .lnk');
+    appsStatus.textContent = result.error ? tr(result.error) : tr('Программы, папки, файлы и ссылки');
     if (action === 'launch' && !result.error && activeTab === 'apps') {
       setMascotMood('wave', 'Приложение открывается! 👋', 2600);
     }
@@ -1235,7 +1342,8 @@ async function refreshClipboardNow() {
 
 function renderClips() {
   const filter = (clipSearchInput.value || '').toLowerCase();
-  const filtered = allClips.filter((c) => (c.text || '').toLowerCase().includes(filter));
+  const filtered = allClips.filter(c => (c.text || '').toLowerCase().includes(filter) &&
+    (document.getElementById('clipFavorites').getAttribute('aria-pressed') !== 'true' || c.pinned));
   clipCounter.textContent = allClips.length;
   clipList.innerHTML = '';
 
@@ -1247,6 +1355,13 @@ function renderClips() {
   filtered.forEach((item) => {
     const row = document.createElement('div');
     row.className = 'clip-item';
+    row.draggable = true;
+    row.title = tr('Перетащи запись на вкладку «Полка»');
+    row.addEventListener('dragstart', event => {
+      clearTimeout(collapseTimer);
+      event.dataTransfer.effectAllowed = 'copy';
+      event.dataTransfer.setData('application/x-dexxyq-clipboard', item.id);
+    });
 
     const leftWrap = document.createElement('div');
     leftWrap.style.display = 'flex';
@@ -1256,6 +1371,7 @@ function renderClips() {
 
     if (item.type === 'image' && item.previewUrl) {
       const thumb = document.createElement('img');
+      thumb.draggable = false;
       thumb.src = item.previewUrl;
       thumb.style.width = '32px';
       thumb.style.height = '24px';
@@ -1283,7 +1399,19 @@ function renderClips() {
       renderClips();
     });
 
-    metaDiv.appendChild(delBtn);
+    const favorite = document.createElement('button');
+    favorite.type = 'button';
+    favorite.className = 'shelf-del clip-favorite';
+    favorite.textContent = item.pinned ? '★' : '☆';
+    favorite.setAttribute('aria-label', tr(item.pinned ? 'Убрать из избранного' : 'В избранное'));
+    favorite.setAttribute('aria-pressed', String(Boolean(item.pinned)));
+    favorite.addEventListener('click', async event => {
+      event.stopPropagation();
+      favorite.disabled = true;
+      try { allClips = await window.dexxyq.pinClipboard(item.id); renderClips(); }
+      finally { favorite.disabled = false; }
+    });
+    metaDiv.append(favorite, delBtn);
     row.appendChild(leftWrap);
     row.appendChild(metaDiv);
 
@@ -1337,7 +1465,7 @@ clipClearBtn.addEventListener('click', async () => {
 
 window.dexxyq.onClipboardUpdated((data) => {
   allClips = data || [];
-  if (isExpanded && activeTab === 'clipboard') renderClips();
+  if (isExpanded && activeTab === 'clipboard' && !island.classList.contains('opening')) renderClips();
 });
 
 window.addEventListener('island-language-change', () => {

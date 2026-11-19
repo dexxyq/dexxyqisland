@@ -75,9 +75,7 @@
           <span class="closed-track" id="closedTrack">dexxyq</span>
         </div>
 
-        <div class="closed-center">
-          <div class="camera-dot"></div>
-        </div>
+        <time class="closed-clock" id="closedClock"></time>
 
         <div class="closed-right">
           <span class="telegram-compact-badge" id="telegramCompactBadge" hidden>
@@ -138,6 +136,7 @@
           </div>
 
           <div class="header-actions">
+            <button class="icon-btn" id="islandToolsButton" type="button" title="Поиск и инструменты" aria-label="Поиск и инструменты">⌕</button>
             <button class="icon-btn" id="islandSettingsButton" type="button" title="Настройки" aria-label="Настройки">⚙</button>
             <button class="icon-btn pinned" id="aotToggleBtn" title="Остров поверх всех окон. Для игр используй полноэкранный режим без рамки.">
               <svg viewBox="0 0 24 24"><path fill="currentColor" d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
@@ -229,6 +228,7 @@
                 <button id="islandSettingsClose" class="btn-small" type="button" aria-label="Закрыть">×</button>
               </div>
               <div class="island-settings-body">
+                <button id="settingsTransferButton" class="btn-small" type="button">Экспорт и импорт настроек</button>
                 <fieldset class="settings-language">
                   <legend>Язык</legend>
                   <label><input type="radio" name="islandLanguage" value="ru" checked><span lang="ru">Русский</span></label>
@@ -293,6 +293,52 @@
               </div>
               <p id="mascotSettingsStatus" role="status"></p>
             </form>
+          </dialog>
+          <dialog id="islandTools" aria-labelledby="islandToolsTitle">
+            <div class="mascot-settings-header">
+              <h2 id="islandToolsTitle">Инструменты</h2>
+              <button id="islandToolsClose" class="btn-small" type="button" aria-label="Закрыть">×</button>
+            </div>
+            <nav id="toolsNavigation" aria-label="Инструменты">
+              <button class="btn-small" type="button" data-tool="search" aria-pressed="true">Поиск</button>
+              <button class="btn-small" type="button" data-tool="timers" aria-pressed="false">Таймеры</button>
+              <button class="btn-small" type="button" data-tool="audio" aria-pressed="false">Звук</button>
+              <button class="btn-small" type="button" data-tool="history" aria-pressed="false">Уведомления</button>
+              <button class="btn-small" type="button" data-tool="transfer" aria-pressed="false">Настройки</button>
+            </nav>
+            <div class="tools-body">
+              <section data-tool-panel="search">
+                <input id="islandSearch" class="clip-search" placeholder="Программа, файл, текст или чат…" aria-label="Поиск по острову" autocomplete="off">
+                <div id="islandSearchResults" class="tools-list" role="list" aria-label="Результаты поиска"></div>
+              </section>
+              <section data-tool-panel="timers" hidden>
+                <form id="islandTimerForm" class="tools-timer-form">
+                  <label>Напомнить о… <input id="islandTimerLabel" class="clip-search" type="text" maxlength="160" required></label>
+                  <label>Через минут <input id="islandTimerMinutes" class="clip-search" type="number" min="1" max="10080" value="20" required></label>
+                  <button class="btn-small" type="submit">Добавить</button>
+                </form>
+                <div id="islandTimers" class="tools-list"></div>
+              </section>
+              <section data-tool-panel="audio" hidden>
+                <button id="audioRefresh" class="btn-small" type="button">Обновить</button>
+                <p class="tools-hint">Выбор устройства применяется к звуку Windows и звонкам.</p>
+                <div id="islandAudioDevices" class="tools-list"></div>
+              </section>
+              <section data-tool-panel="history" hidden>
+                <button id="toolsClearHistory" class="btn-small" type="button">Очистить историю уведомлений</button>
+                <div id="islandHistory" class="tools-list"></div>
+              </section>
+              <section data-tool-panel="transfer" hidden>
+                <p class="tools-hint">Язык, кнопки, горячие клавиши и настройки маскота сохраняются в JSON.</p>
+                <button id="toolsExport" class="btn-small" type="button">Экспорт настроек</button>
+                <button id="toolsImport" class="btn-small" type="button">Выбрать файл настроек</button>
+                <div id="toolsImportPreview" hidden>
+                  <p class="tools-hint">Настройки из выбранного файла готовы к применению. Остров перезагрузится.</p>
+                  <button id="toolsImportApply" class="btn-small" type="button">Применить настройки</button>
+                </div>
+              </section>
+            </div>
+            <p id="islandToolsStatus" role="status"></p>
           </dialog>
 
           <!-- TABS CONTENT AREA -->
@@ -471,6 +517,7 @@
                   <input type="text" id="clipSearchInput" class="clip-search" placeholder="Поиск или вставь текст + Enter..." />
                   <button class="btn-small" id="clipPasteBtn" title="Захватить текущий буфер сейчас">Вставить</button>
                   <button class="btn-small danger" id="clipClearBtn">Очистить</button>
+                  <button class="btn-small" id="clipFavorites" type="button" aria-pressed="false" title="Избранное">★</button>
                 </div>
                 <div class="clip-list" id="clipList"></div>
               </div>
@@ -479,8 +526,17 @@
               <div class="shelf-container" id="appsDropZone">
                 <div class="shelf-toolbar">
                   <span class="shelf-hint" id="appsStatus" role="status"></span>
-                  <button class="btn-small" id="addPinnedApp" type="button">+ Приложение</button>
+                  <div class="shelf-actions">
+                    <button class="btn-small" id="addPinnedApp" type="button">+ Файл</button>
+                    <button class="btn-small" id="addPinnedFolder" type="button">+ Папка</button>
+                    <button class="btn-small" id="showPinnedLink" type="button">+ Ссылка</button>
+                  </div>
                 </div>
+                <form id="pinnedLinkForm" class="pinned-link-form" hidden>
+                  <input id="pinnedLinkUrl" class="clip-search" type="text" maxlength="4096" placeholder="https://…" aria-label="Ссылка" required>
+                  <button class="btn-small" type="submit">Добавить</button>
+                  <button class="btn-small" id="cancelPinnedLink" type="button">×</button>
+                </form>
                 <div class="pinned-apps-list" id="pinnedAppsList" aria-label="Закреплённые приложения"></div>
               </div>
             </div>
@@ -506,8 +562,9 @@
                       <strong>Чаты</strong>
                       <button class="btn-small" id="telegramLogout" type="button" aria-label="Выйти из Telegram">Выйти</button>
                     </div>
-                    <input id="telegramFilter" type="search" aria-label="Поиск среди недавних чатов" placeholder="Найти чат">
-                    <div id="telegramChatList" class="telegram-chat-list" aria-label="Недавние чаты"></div>
+                    <div id="telegramFolders" class="telegram-folders" role="group" aria-label="Папки Telegram"></div>
+                    <input id="telegramFilter" type="search" aria-label="Поиск по чатам" placeholder="Найти чат">
+                    <div id="telegramChatList" class="telegram-chat-list" aria-label="Чаты"></div>
                   </div>
                   <div class="telegram-thread">
                     <div id="telegramChatTitle" class="telegram-thread-title">Telegram</div>
@@ -517,12 +574,30 @@
                     </div>
                     <div id="telegramHistory" class="telegram-history" aria-label="Последние сообщения" hidden></div>
                     <form id="telegramReply" hidden autocomplete="off">
+                      <div id="telegramPicker" class="telegram-picker" hidden>
+                        <button id="telegramStickerPack" class="telegram-pack-toggle" type="button"
+                          aria-label="Набор стикеров" aria-expanded="false" aria-controls="telegramPackList" hidden>
+                          <span id="telegramStickerPackName"></span><span aria-hidden="true">⌄</span>
+                        </button>
+                        <div id="telegramPackList" class="telegram-pack-list" role="group" aria-label="Набор стикеров" hidden></div>
+                        <p id="telegramPickerStatus" role="status" hidden></p>
+                        <div id="telegramPickerGrid" class="telegram-picker-grid"></div>
+                      </div>
+                      <div id="telegramReplyTarget" class="telegram-reply-target" hidden>
+                        <blockquote id="telegramReplyPreview" class="telegram-quote" aria-live="polite"></blockquote>
+                        <button id="telegramCancelReply" class="btn-small" type="button" aria-label="Отменить ответ" title="Отменить ответ">×</button>
+                      </div>
                       <div id="telegramAttachment" class="telegram-attachment" hidden>
                         <img id="telegramAttachmentImage" alt="Предпросмотр скриншота">
                         <span>Скриншот готов к отправке</span>
                         <button id="telegramRemoveAttachment" class="btn-small" type="button" aria-label="Убрать скриншот">×</button>
                       </div>
+                      <div id="telegramDocuments" class="telegram-documents" hidden></div>
                       <div class="telegram-compose">
+                        <input id="telegramFileInput" type="file" multiple hidden>
+                        <button id="telegramAddFiles" class="btn-small telegram-compose-tool" type="button" title="Прикрепить файл" aria-label="Прикрепить файл">📎</button>
+                        <button id="telegramEmojiButton" class="btn-small telegram-compose-tool" type="button" aria-pressed="false" title="Эмодзи" aria-label="Эмодзи">😊</button>
+                        <button id="telegramStickerButton" class="btn-small telegram-compose-tool" type="button" aria-pressed="false" title="Стикеры Telegram" aria-label="Стикеры Telegram">🗂</button>
                         <input id="telegramText" class="clip-search" maxlength="4096" aria-label="Сообщение" placeholder="Сообщение или скриншот (Ctrl+V)">
                         <button class="btn-small" type="submit">Отправить</button>
                       </div>
@@ -543,5 +618,6 @@
   <script src="renderer.js"></script>
   <script src="telegram.js"></script>
   <script src="settings.js"></script>
+  <script src="tools.js"></script>
 </body>
 </html>

@@ -6,6 +6,8 @@ const { exec, execFile, spawn } = require('child_process');
 const { createInterface } = require('readline');
 const { createHash } = require('crypto');
 const { getSpotifySession, controlSpotify, setSpotifyVolume, closeSpotify } = require('./spotify');
+const { registerIslandTools } = require('./island-tools');
+const { runAudioControl } = require('./audio-control');
 
 // =====================================================
 // ULTRA-LOW RAM & V8 MEMORY OPTIMIZATION FLAGS
@@ -50,6 +52,7 @@ if (!isSetupMode) {
 }
 
 let mainWindow = null;
+let mainFileDialogOpen = false;
 let soundcloudWindow = null;
 const mediaWindows = {
   soundcloud: null,
@@ -61,7 +64,7 @@ let isDraggingOutFile = false;
 let setupWindow = null;
 let isGameMode = false;
 const shortcutDefaults = Object.freeze({
-  home: '', stats: '', shelf: '', clipboard: '', apps: '', telegram: '',
+  home: '', stats: '', shelf: '', clipboard: '', apps: '', telegram: '', search: 'Ctrl+Shift+Space',
   aot: 'Alt+T', monitor: '', game: '', autostart: '', stealth: 'Alt+X', pin: ''
 });
 const shortcutPath = path.join(userDataDir, 'shortcuts.json');
@@ -92,13 +95,15 @@ if (!fs.existsSync(shelfExportDir)) {
 
 const mediaPrefsPath = path.join(shelfDir, 'media-prefs.json');
 const pinnedAppsPath = path.join(shelfDir, 'pinned-apps.json');
-const pinnedAppExtensions = new Set(['.exe', '.lnk']);
 
 function isPinnedAppPath(file) {
-  return typeof file === 'string' && path.isAbsolute(file) &&
-    pinnedAppExtensions.has(path.extname(file).toLowerCase());
+  return typeof file === 'string' && file.length <= 4096 &&
+    (path.isAbsolute(file) || isPinnedWebLink(file));
 }
 
+function isPinnedWebLink(file) {
+  try { return ['https:', 'http:'].includes(new URL(file).protocol); } catch { return false; }
+}
 function readPinnedApps() {
   try {
     const files = JSON.parse(fs.readFileSync(pinnedAppsPath, 'utf8'));
@@ -119,9 +124,9 @@ function addPinnedApps(paths) {
   const files = readPinnedApps();
   const previousLength = files.length;
   const keys = new Set(files.map(file => file.toLowerCase()));
-  for (const file of paths.filter(isPinnedAppPath).map(file => path.normalize(file))) {
+  for (const file of paths.filter(isPinnedAppPath).map(file => isPinnedWebLink(file) ? file : path.normalize(file))) {
     try {
-      if (keys.has(file.toLowerCase()) || !fs.statSync(file).isFile()) continue;
+      if (keys.has(file.toLowerCase()) || (!isPinnedWebLink(file) && !fs.statSync(file).isFile() && !fs.statSync(file).isDirectory())) continue;
     } catch {
       continue;
     }
@@ -136,10 +141,12 @@ async function describePinnedApps(files) {
   return Promise.all(files.map(async file => {
     let icon = '';
     try {
-      const image = await app.getFileIcon(file, { size: 'normal' });
-      if (!image.isEmpty()) icon = image.toDataURL();
+      if (!isPinnedWebLink(file)) {
+        const image = await app.getFileIcon(file, { size: 'normal' });
+        if (!image.isEmpty()) icon = image.toDataURL();
+      }
     } catch {}
-    return { file, name: path.basename(file, path.extname(file)), icon };
+    return { file, name: isPinnedWebLink(file) ? new URL(file).hostname : path.basename(file, path.extname(file)), icon };
   }));
 }
 try {
@@ -165,7 +172,7 @@ function saveMediaPrefs() {
 }
 
 function applyAlwaysOnTopToWindow() {
-  if (!mainWindow || mainWindow.isDestroyed()) return;
+  if (mainFileDialogOpen || !mainWindow || mainWindow.isDestroyed()) return;
   try {
     if (alwaysOnTopEnabled) {
       mainWindow.setAlwaysOnTop(true, 'screen-saver', 1);
@@ -177,11 +184,22 @@ function applyAlwaysOnTopToWindow() {
   } catch (e) {}
 }
 
+async function openIslandFileDialog(options, mode = 'open') {
+  if (mainFileDialogOpen || !mainWindow || mainWindow.isDestroyed()) return { canceled: true, filePaths: [] };
+  mainFileDialogOpen = true;
+  try {
+    return mode === 'save' ? await dialog.showSaveDialog(mainWindow, options) : await dialog.showOpenDialog(mainWindow, options);
+  } finally {
+    mainFileDialogOpen = false;
+    applyAlwaysOnTopToWindow();
+  }
+}
+
 function startAlwaysOnTopKeeper() {
   if (aotKeeperIntervalId) clearInterval(aotKeeperIntervalId);
   // Periodically re-assert screen-saver topmost Z-order so fullscreen games (CS2, Dota, etc.) don't push the island behind them
   aotKeeperIntervalId = setInterval(() => {
-    if (!alwaysOnTopEnabled || !mainWindow || mainWindow.isDestroyed()) return;
+    if (mainFileDialogOpen || !alwaysOnTopEnabled || !mainWindow || mainWindow.isDestroyed()) return;
     try {
       mainWindow.setAlwaysOnTop(true, 'screen-saver', 1);
       mainWindow.moveTop();
@@ -193,6 +211,12 @@ function startAlwaysOnTopKeeper() {
 const clipMetaPath = path.join(shelfDir, 'clipboard-history.json');
 let clipboardHistory = [];
 let lastClipSignature = '';
+
+function trimClipboardHistory(limit) {
+  const pinned = clipboardHistory.filter(item => item.pinned === true).slice(0, 100);
+  const recent = clipboardHistory.filter(item => item.pinned !== true).slice(0, limit);
+  clipboardHistory = [...pinned, ...recent];
+}
 
 function loadClipboardHistory() {
   try {
@@ -491,37 +515,36 @@ function ensureMediaWorker(serviceId = activeMediaService) {
   return win;
 }
 
-let cachedDesktopTrack = { yandex: null, lastCheck: 0 };
-function refreshDesktopPlayersCache() {
-  const now = Date.now();
-  if (now - cachedDesktopTrack.lastCheck < 6000) return;
-  cachedDesktopTrack.lastCheck = now;
+const readYandexWindowTitle = Buffer.from(`
+  [Console]::OutputEncoding = [Text.Encoding]::UTF8
+  $names = 'YandexMusic*', 'Yandex Music*', 'Yandex-Music*', 'Яндекс Музыка*', 'ЯндексМузыка*', 'Яндекс.Музыка*'
+  Get-Process -Name $names -ErrorAction SilentlyContinue |
+    ForEach-Object { $_.MainWindowTitle } |
+    Where-Object { $_ -and $_.Trim() -notmatch '^(Яндекс[ .]?Музыка|Yandex[ -]?Music)$' } |
+    Select-Object -First 1
+`, 'utf16le').toString('base64');
+let yandexDesktopTrack = null;
+let yandexDesktopRead;
+let yandexDesktopLastCheck = 0;
 
-  exec('tasklist /V /FO CSV /NH /FI "STATUS eq RUNNING"', { windowsHide: true, maxBuffer: 512 * 1024 }, (err, stdout) => {
-    cachedDesktopTrack.yandex = null;
-    if (err || !stdout) return;
-    try {
-      const lines = stdout.split(/\r?\n/);
-      for (const line of lines) {
-        const lower = line.toLowerCase();
-        if (!lower.includes('яндекс') && !lower.includes('yandex')) continue;
-        // Last column in tasklist /V CSV is Window Title
-        const cols = line.split('","');
-        if (cols.length < 9) continue;
-        const wTitle = cols[cols.length - 1].replace(/^"|"$|/g, '').trim();
-        if (!wTitle || wTitle === 'N/A' || wTitle === 'Н/Д') continue;
+function getYandexDesktopTrack() {
+  if (yandexDesktopRead) return yandexDesktopRead;
+  if (Date.now() - yandexDesktopLastCheck < 10_000) return Promise.resolve(yandexDesktopTrack);
 
-        if (!['яндекс музыка', 'yandex music'].includes(wTitle.toLowerCase())) {
-          const parts = wTitle.split(/\s+[—\-]\s+/);
-          cachedDesktopTrack.yandex = {
-            title: parts[0].trim(),
-            artist: parts[1] ? parts[1].trim() : 'Яндекс Музыка (ПК)',
-            isPlaying: true
-          };
-        }
-      }
-    } catch (e) {}
-  });
+  // Reading the known client's window title avoids tasklist /V and its system-wide process-owner queries.
+  const powershell = path.join(process.env.SystemRoot || 'C:\\Windows',
+    'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+  yandexDesktopRead = new Promise(resolve => {
+    execFile(powershell, ['-NoProfile', '-NonInteractive', '-EncodedCommand', readYandexWindowTitle],
+      { windowsHide: true, timeout: 2500, maxBuffer: 16 * 1024 }, (error, stdout) => {
+        const windowTitle = error ? '' : stdout.trim();
+        const [title, ...artist] = windowTitle.split(/\s+[—–-]\s+/);
+        yandexDesktopTrack = title ? { title, artist: artist.join(' — ') || 'Яндекс Музыка (ПК)' } : null;
+        yandexDesktopLastCheck = Date.now();
+        resolve(yandexDesktopTrack);
+      });
+  }).finally(() => { yandexDesktopRead = undefined; });
+  return yandexDesktopRead;
 }
 
 async function getMediaState(serviceId = activeMediaService) {
@@ -530,11 +553,10 @@ async function getMediaState(serviceId = activeMediaService) {
   const win = mediaWindows[srv];
 
   if (srv === 'spotify') return getSpotifyMediaState();
-  if (srv === 'yandex') refreshDesktopPlayersCache();
 
   if (!win || win.isDestroyed()) {
     // Check if desktop app has a track playing even before web window is opened
-    const desk = cachedDesktopTrack[srv];
+    const desk = srv === 'yandex' ? await getYandexDesktopTrack() : null;
     if (desk) {
       return {
         service: srv,
@@ -674,8 +696,8 @@ async function getMediaState(serviceId = activeMediaService) {
     }
 
     // If web player isn't playing a track yet, fall back to Desktop App state if running!
-    const desk = cachedDesktopTrack[srv];
-    if (webState && !webState.isPlaying && desk && desk.title) {
+    const desk = srv === 'yandex' && webState && !webState.isPlaying ? await getYandexDesktopTrack() : null;
+    if (desk) {
       return {
         ...webState,
         isPlaying: true,
@@ -707,15 +729,15 @@ async function mediaServiceAction(serviceId, action, value) {
     return;
   }
 
-  const desk = cachedDesktopTrack[srv];
-
   // Don't spawn a heavy hidden browser window just for volume slider changes if no player is open yet!
   if (action === 'setVolume' && (!mediaWindows[srv] || mediaWindows[srv].isDestroyed())) {
     return;
   }
 
   // If desktop Yandex is actively playing and no web window is open yet, handle play/pause/next/prev with 0 MB RAM via media keys!
-  if (desk && (!mediaWindows[srv] || mediaWindows[srv].isDestroyed()) && ['playPause', 'next', 'prev'].includes(action)) {
+  if (srv === 'yandex' && ['playPause', 'next', 'prev'].includes(action) &&
+      (!mediaWindows[srv] || mediaWindows[srv].isDestroyed()) && await getYandexDesktopTrack() &&
+      (!mediaWindows[srv] || mediaWindows[srv].isDestroyed())) {
     if (action === 'playPause') sendWindowsMediaKey(179);
     if (action === 'next') sendWindowsMediaKey(176);
     if (action === 'prev') sendWindowsMediaKey(177);
@@ -1148,12 +1170,26 @@ function updateGpuProbe() {
 }
 
 function startFallbackGpuProbe() {
-  // Fallback for AMD / Intel GPUs without nvidia-smi
-  exec('powershell -NoProfile -Command "(Get-CimInstance Win32_VideoController | Select-Object -First 1).Name"', { windowsHide: true }, (err, stdout) => {
-    if (!err && stdout && stdout.trim()) {
-      cachedGpuName = stdout.trim().replace(/NVIDIA |GeForce |AMD |Radeon |Intel\(R\) /gi, '').trim();
+  const powershell = path.join(process.env.SystemRoot || 'C:\\Windows',
+    'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
+  const script = String.raw`
+    [Console]::OutputEncoding = [Text.Encoding]::UTF8
+    $videoMap = Get-ItemProperty -LiteralPath 'HKLM:\HARDWARE\DEVICEMAP\VIDEO' -ErrorAction SilentlyContinue
+    $adapterKey = $videoMap.'\Device\Video0'
+    if ($adapterKey -and $adapterKey.StartsWith('\Registry\Machine\', [StringComparison]::OrdinalIgnoreCase)) {
+      $key = 'HKLM:\' + $adapterKey.Substring('\Registry\Machine\'.Length)
+      $adapter = Get-ItemProperty -LiteralPath $key -ErrorAction SilentlyContinue
+      $name = $adapter.'HardwareInformation.AdapterString'
+      if ($name -isnot [string] -or !$name.Trim()) { $name = $adapter.DriverDesc }
+      if ($name) { $name }
     }
-  });
+  `;
+  const encoded = Buffer.from(script, 'utf16le').toString('base64');
+  execFile(powershell, ['-NoProfile', '-NonInteractive', '-EncodedCommand', encoded],
+    { windowsHide: true, timeout: 2500 }, (error, stdout) => {
+      const name = error ? '' : stdout.trim().replace(/NVIDIA |GeForce |AMD |Radeon |Intel\(R\) /gi, '').trim();
+      if (name) cachedGpuName = name;
+    });
 }
 
 function installationFileHash(file) {
@@ -1253,9 +1289,7 @@ async function checkClipboardNow(forceBroadcast = false) {
               previewUrl,
               time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
             });
-            if (clipboardHistory.length > 25) {
-              clipboardHistory = clipboardHistory.slice(0, 25);
-            }
+            trimClipboardHistory(25);
             saveClipboardHistory();
             if (mainWindow && !mainWindow.isDestroyed()) {
               mainWindow.webContents.send('clipboard-updated', clipboardHistory);
@@ -1277,16 +1311,16 @@ async function checkClipboardNow(forceBroadcast = false) {
         const sig = 'txt:' + trimmed;
         if (sig !== lastClipSignature) {
           lastClipSignature = sig;
-          clipboardHistory = clipboardHistory.filter(i => i.text !== trimmed);
+          const existing = clipboardHistory.find(i => i.type === 'text' && i.text === trimmed);
+          clipboardHistory = clipboardHistory.filter(i => i !== existing);
           clipboardHistory.unshift({
             id: Date.now().toString() + Math.random().toString(36).slice(2, 5),
             type: 'text',
             text: trimmed,
+            ...(existing?.pinned ? { pinned: true, id: existing.id } : {}),
             time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
           });
-          if (clipboardHistory.length > 35) {
-            clipboardHistory = clipboardHistory.slice(0, 35);
-          }
+          trimClipboardHistory(35);
           saveClipboardHistory();
           if (mainWindow && !mainWindow.isDestroyed()) {
             mainWindow.webContents.send('clipboard-updated', clipboardHistory);
@@ -1324,6 +1358,18 @@ function getFallbackDragIcon() {
 
 let lastIgnoreState = true;
 function setupIPC() {
+  const tools = registerIslandTools({
+    directory: shelfDir, getWindow: () => mainWindow,
+    openDialog: (mode, options) => openIslandFileDialog(options, mode)
+  });
+  ipcMain.handle('audio-control', async (event, action, value) => {
+    if (event.sender !== mainWindow?.webContents || event.senderFrame?.parent !== null) return {};
+    try { return await runAudioControl(action, value); }
+    catch (error) {
+      console.warn('Audio control:', error.message);
+      return { error: 'Не удалось управлять звуком. Проверь подключение устройства и нажми «Обновить».' };
+    }
+  });
   ipcMain.handle('shortcuts-get', () => shortcuts);
   ipcMain.handle('shortcuts-save', (event, values) => {
     if (event.sender !== mainWindow?.webContents || !values || typeof values !== 'object') return { error: 'invalid' };
@@ -1331,7 +1377,7 @@ function setupIPC() {
     const used = new Set();
     for (const action of Object.keys(shortcutDefaults)) {
       const value = values[action];
-      if (typeof value !== 'string' || (value && !/^(?:Ctrl\+)?(?:Alt\+)?(?:Shift\+)?(?:Super\+)?(?:[A-Z0-9]|F(?:[1-9]|1[0-2]))$/.test(value)) ||
+      if (typeof value !== 'string' || (value && !/^(?:Ctrl\+)?(?:Alt\+)?(?:Shift\+)?(?:Super\+)?(?:[A-Z0-9]|Space|F(?:[1-9]|1[0-2]))$/.test(value)) ||
           (value && !value.includes('+') && !/^F\d+$/.test(value))) return { error: 'invalid', action };
       if (value && used.has(value)) return { error: 'duplicate', action };
       if (value) used.add(value);
@@ -1364,7 +1410,10 @@ function setupIPC() {
       return problem;
     }
   });
-  require('./telegram').registerTelegram(ipcMain, () => mainWindow);
+  require('./telegram').registerTelegram(ipcMain, () => mainWindow,
+    id => getShelfItems().find(item => item.id === id), change => {
+      if (change.type === 'incoming') tools.notification(change.title || 'Telegram', 'telegram', { chatId: change.chatId });
+    });
   ipcMain.on('telegram-layout', (event, expanded) => {
     if (mainWindow?.webContents !== event.sender || typeof expanded !== 'boolean') return;
     const bounds = mainWindow.getBounds();
@@ -1509,21 +1558,35 @@ function setupIPC() {
     if (!trimmed) return clipboardHistory;
     await clipboard.writeText(trimmed);
     lastClipSignature = 'txt:' + trimmed;
-    clipboardHistory = clipboardHistory.filter(i => i.text !== trimmed);
+    const existing = clipboardHistory.find(i => i.type === 'text' && i.text === trimmed);
+    clipboardHistory = clipboardHistory.filter(i => i !== existing);
     clipboardHistory.unshift({
       id: Date.now().toString() + Math.random().toString(36).slice(2, 5),
       type: 'text',
       text: trimmed,
+      ...(existing?.pinned ? { pinned: true, id: existing.id } : {}),
       time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     });
+    trimClipboardHistory(35);
     saveClipboardHistory();
     return clipboardHistory;
   });
 
-  ipcMain.handle('clipboard-clear', () => {
-    clipboardHistory = [];
+  ipcMain.handle('clipboard-pin', (event, id) => {
+    if (event.sender !== mainWindow?.webContents) return clipboardHistory;
+    const item = clipboardHistory.find(entry => entry.id === id);
+    if (!item || (!item.pinned && clipboardHistory.filter(entry => entry.pinned).length >= 100)) return clipboardHistory;
+    item.pinned = !item.pinned;
+    trimClipboardHistory(35);
     saveClipboardHistory();
-    return [];
+    mainWindow.webContents.send('clipboard-updated', clipboardHistory);
+    return clipboardHistory;
+  });
+
+  ipcMain.handle('clipboard-clear', () => {
+    clipboardHistory = clipboardHistory.filter(item => item.pinned === true);
+    saveClipboardHistory();
+    return clipboardHistory;
   });
 
   ipcMain.handle('clipboard-delete', (event, id) => {
@@ -1541,26 +1604,34 @@ function setupIPC() {
     }
     try {
       let files = readPinnedApps();
-      if (action === 'pick') {
-        const { canceled, filePaths } = await dialog.showOpenDialog(mainWindow, {
+      if (action === 'pick' || action === 'pick-folder') {
+        const { canceled, filePaths } = await openIslandFileDialog({
           title: 'Закрепить приложение',
           defaultPath: app.getPath('desktop'),
-          filters: [{ name: 'Приложения и ярлыки', extensions: ['exe', 'lnk'] }],
-          properties: ['openFile', 'multiSelections', 'noResolveAliases']
+          properties: action === 'pick-folder' ? ['openDirectory', 'multiSelections'] : ['openFile', 'multiSelections', 'noResolveAliases']
         });
         if (canceled) return {};
         files = addPinnedApps(filePaths);
+      } else if (action === 'link') {
+        if (typeof value !== 'string' || !isPinnedWebLink(value) || value.length > 4096) return { error: 'Введи ссылку http:// или https://.' };
+        if (!files.includes(value)) { files.push(value); savePinnedApps(files); }
       } else if (action === 'drop' && Array.isArray(value)) {
-        if (!value.some(isPinnedAppPath)) return { error: 'Перетащи файл .exe или ярлык .lnk.' };
+        if (!value.some(isPinnedAppPath)) return { error: 'Перетащи программу, папку или файл.' };
         files = addPinnedApps(value);
       } else if (action === 'remove' && files.includes(value)) {
         files = files.filter(file => file !== value);
         savePinnedApps(files);
       } else if (action === 'launch') {
-        if (!files.includes(value) || !fs.statSync(value, { throwIfNoEntry: false })?.isFile()) {
+        if (!files.includes(value) || (!isPinnedWebLink(value) && !fs.existsSync(value))) {
           return { error: 'Файл не найден. Закрепи приложение заново.' };
         }
+        if (isPinnedWebLink(value)) {
+          await shell.openExternal(value);
+          tools.notification(new URL(value).hostname + ' · ↗');
+          return {};
+        }
         const error = await shell.openPath(value);
+        if (!error) tools.notification(path.basename(value) + ' · ↗');
         return error ? { error: 'Не удалось открыть приложение. Проверь путь и ярлык.' } : {};
       }
       return { apps: await describePinnedApps(files) };
@@ -1570,13 +1641,13 @@ function setupIPC() {
     }
   });
 
-  ipcMain.handle('shelf-add-files', (event, files) => {
+  function addShelfFiles(files) {
     const items = getShelfItems();
     const previousCount = items.length;
     for (const f of files) {
       try {
         const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
-        const safeName = path.basename(f.path || f.name || 'file.dat');
+        const safeName = path.basename(f.name || f.path || 'file.dat');
         const destPath = path.join(shelfDir, `${id}_${safeName}`);
         const cleanExportPath = path.join(shelfExportDir, safeName);
 
@@ -1605,7 +1676,24 @@ function setupIPC() {
       } catch (err) {}
     }
     saveShelfItems(items);
+    if (items.length > previousCount) tools.notification('📁 +' + (items.length - previousCount));
     return { items, added: items.length - previousCount };
+  }
+
+  ipcMain.handle('shelf-add-files', (_, files) => addShelfFiles(files));
+  ipcMain.handle('shelf-add-clipboard', (event, id) => {
+    if (event.sender !== mainWindow?.webContents || event.senderFrame?.parent !== null) return;
+    const item = clipboardHistory.find(entry => entry.id === id);
+    if (!item) return { items: getShelfItems(), added: 0 };
+    const date = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 23);
+    if (item.type === 'image') {
+      return addShelfFiles([{
+        name: `Screenshot-${date}.png`,
+        path: item.imgFilePath,
+        base64: item.fullDataUrl?.replace(/^data:image\/png;base64,/, '')
+      }]);
+    }
+    return addShelfFiles([{ name: `Clipboard-${date}.txt`, base64: Buffer.from(item.text || '', 'utf8').toString('base64') }]);
   });
 
   ipcMain.handle('shelf-remove', (event, id) => {
@@ -1630,10 +1718,9 @@ function setupIPC() {
     return [];
   });
 
-  ipcMain.handle('shelf-open-file', (event, filePath) => {
-    if (filePath && fs.existsSync(filePath)) {
-      shell.openPath(filePath);
-    }
+  ipcMain.handle('shelf-open-file', async (event, filePath) => {
+    if (filePath && fs.existsSync(filePath)) return shell.openPath(filePath);
+    return 'Файл не найден.';
   });
 
   ipcMain.handle('shelf-copy-file', async (event, filePath) => {
@@ -1824,6 +1911,11 @@ function setupIPC() {
 
       const finalExe = path.join(targetDir, 'dexxyqisland.exe');
       await fs.promises.access(finalExe);
+      // Older releases unpacked this retired helper beside the installer icon.
+      const retiredHelper = path.join(targetDir, 'resources', 'app.asar.unpacked', 'build', 'memory-cleaner.exe');
+      await fs.promises.rm(retiredHelper, { force: true }).catch(error => {
+        console.warn('Could not remove the retired RAM cleanup helper:', error.code);
+      });
       const icoFile = path.join(targetDir, 'resources', 'app.asar.unpacked', 'build', 'icon.ico');
       const fallbackIco = fs.existsSync(icoFile) ? icoFile : finalExe;
 
